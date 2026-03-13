@@ -1,44 +1,63 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document } from 'mongoose';
 
+export type ProductDocument = Product & Document;
+
 @Schema({ timestamps: true })
-export class Product extends Document {
+export class Product {
 
   @Prop({ required: true, unique: true })
   zoho_item_id: string;
 
-  @Prop({ required: true, index: true })
+  @Prop({ required: true })
   name: string;
-
-  @Prop({ index: true })
-  slug: string;
 
   @Prop()
   description: string;
 
-  @Prop({ required: true, index: true })
-  price: number;
-
-  @Prop({ index: true })
+  @Prop()
   sku: string;
 
-  @Prop({ default: 0, index: true })
-  stock: number;
-
-  @Prop({ default: true, index: true })
-  is_active: boolean;
-
-  @Prop({ type: String, index: true })
-  category: string;
-
-  @Prop({ type: [String], index: true })
-  tags: string[];
-
-  @Prop({ type: Object })
-  attributes: Record<string, any>;
+  @Prop()
+  category_id: string;
 
   @Prop()
-  images: string[];
+  category_name: string;
+
+  @Prop()
+  price: number;
+
+  @Prop()
+  stock: number;
+
+  @Prop({ default: true })
+  track_inventory: boolean;
+
+  // AWS S3 image URL (MANUAL upload)
+  @Prop()
+  image_url: string;
+
+  // Zoho image reference (optional)
+  @Prop()
+  zoho_image_document_id: string;
+
+  @Prop({ default: true })
+  is_active: boolean;
+
+  @Prop({ default: true })
+  show_in_storefront: boolean;
+
+  @Prop()
+  weight: number;
+
+  @Prop()
+  length: number;
+
+  @Prop()
+  width: number;
+
+  @Prop()
+  height: number;
 }
 
 export const ProductSchema = SchemaFactory.createForClass(Product);

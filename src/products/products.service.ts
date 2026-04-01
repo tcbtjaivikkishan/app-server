@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Cron } from '@nestjs/schedule';
@@ -7,21 +8,17 @@ import { ZohoService } from 'src/zoho/zoho.service';
 
 @Injectable()
 export class ProductsService {
-
   constructor(
     @InjectModel(Product.name)
     private productModel: Model<Product>,
     private zohoService: ZohoService,
-  ) { }
-
+  ) {}
 
   @Cron('0 */30 * * * *')
   async syncZohoProducts() {
-
     console.log('Starting Zoho product sync...');
 
     try {
-
       const accessToken = await this.zohoService.getValidAccessToken();
 
       let page = 1;
@@ -29,7 +26,6 @@ export class ProductsService {
       let hasMore = true;
 
       while (hasMore) {
-
         const response = await fetch(
           `https://www.zohoapis.in/inventory/v1/items?organization_id=${process.env.ZOHO_ORG_ID}&page=${page}&per_page=${perPage}`,
           {
@@ -45,7 +41,6 @@ export class ProductsService {
         console.log(`Fetched page ${page} items: ${items.length}`);
 
         for (const item of items) {
-
           await this.productModel.updateOne(
             { zoho_item_id: item.item_id },
             {
@@ -68,41 +63,30 @@ export class ProductsService {
               },
               $setOnInsert: {
                 zoho_item_id: item.item_id,
-              }
+              },
             },
-            { upsert: true }
+            { upsert: true },
           );
-
         }
 
         hasMore = items.length === perPage;
         page++;
-
       }
 
       console.log('Zoho product sync completed');
-
     } catch (error) {
-
       console.error('Zoho product sync failed:', error);
-
     }
-
   }
 
   async getActiveProducts() {
-
     return this.productModel
       .find({ is_active: true, show_in_storefront: true })
-      .select(
-        'name price sku stock description image_url category_name'
-      )
+      .select('name price sku stock description image_url category_name')
       .lean();
-
   }
 
   async getPaginatedProducts(page: number, limit: number) {
-
     const skip = (page - 1) * limit;
 
     const products = await this.productModel
@@ -122,7 +106,5 @@ export class ProductsService {
       page,
       totalPages: Math.ceil(total / limit),
     };
-
   }
-
 }

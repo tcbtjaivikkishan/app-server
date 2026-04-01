@@ -8,6 +8,9 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { ZohoService } from './zoho/zoho.service';
 import { OrdersModule } from './orders/orders.module';
+import { UsersModule } from './users/users.module';
+import { AuthModule } from './auth/auth.module';
+import { CallbackController } from './callback.controller';
 
 @Module({
   imports: [
@@ -24,8 +27,10 @@ import { OrdersModule } from './orders/orders.module';
     ProductsModule,
     ScheduleModule.forRoot(),
     OrdersModule,
+    UsersModule,
+    AuthModule,
   ],
-  controllers: [AppController],
+  controllers: [AppController, CallbackController],
   providers: [AppService],
 })
 export class AppModule implements OnModuleInit {

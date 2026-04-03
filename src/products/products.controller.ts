@@ -1,5 +1,6 @@
-import { Controller, Get, Param, Query } from '@nestjs/common';
+import { BadRequestException, Controller, Get, Param, Query } from '@nestjs/common';
 import { ProductsService } from './products.service';
+import { isValidObjectId } from 'mongoose';
 
 @Controller('products')
 export class ProductsController {
@@ -17,8 +18,17 @@ export class ProductsController {
     );
   }
 
-  // @Get(':id')
-  // async getProduct(@Param('id') id: string) {
-  //   return this.productModel.findById(id).lean();
-  // }
+  @Get('/id/:id')
+  async getProduct(@Param('id') id: string) {
+    if (!isValidObjectId(id)) {
+      throw new BadRequestException('Invalid product ID');
+    }
+
+    return this.productsService.getProductById(id);
+  }
+
+  @Get('/filter')
+  async getFilteredProducts(@Query() query: any) {
+    return this.productsService.getFilteredProducts(query);
+  }
 }

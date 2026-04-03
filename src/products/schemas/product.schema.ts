@@ -33,11 +33,9 @@ export class Product {
   @Prop({ default: true })
   track_inventory: boolean;
 
-  // AWS S3 image URL (MANUAL upload)
   @Prop()
   image_url: string;
 
-  // Zoho image reference (optional)
   @Prop()
   zoho_image_document_id: string;
 
@@ -61,3 +59,11 @@ export class Product {
 }
 
 export const ProductSchema = SchemaFactory.createForClass(Product);
+
+ProductSchema.index({ category_id: 1 });
+
+ProductSchema.index({ name: 'text', description: 'text' });
+
+ProductSchema.index({ is_active: 1, show_in_storefront: 1 });
+
+ProductSchema.index({ price: 1 });

@@ -6,11 +6,10 @@ import { ProductsModule } from './products/products.module';
 import { ScheduleModule } from '@nestjs/schedule';
 import { MongooseModule } from '@nestjs/mongoose';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import { ZohoService } from './zoho/zoho.service';
 import { OrdersModule } from './orders/orders.module';
 import { UsersModule } from './users/users.module';
 import { AuthModule } from './auth/auth.module';
-import { CallbackController } from './callback.controller';
+import { CallbackController } from './zoho/callback.controller';
 
 @Module({
   imports: [
@@ -33,10 +32,4 @@ import { CallbackController } from './callback.controller';
   controllers: [AppController, CallbackController],
   providers: [AppService],
 })
-export class AppModule implements OnModuleInit {
-  constructor(private zohoService: ZohoService) {}
-
-  async onModuleInit() {
-    await this.zohoService.initializeToken();
-  }
-}
+export class AppModule {}

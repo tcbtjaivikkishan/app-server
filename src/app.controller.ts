@@ -1,19 +1,17 @@
 import { Controller, Get } from '@nestjs/common';
 import { AppService } from './app.service';
-import { ZohoService } from './zoho/zoho.service';
+import { CrmService } from './zoho/crm/crm.service';
 
 @Controller()
 export class AppController {
-  [x: string]: any;
   constructor(
     private readonly appService: AppService,
-    private readonly zohoService: ZohoService,
+    private readonly zohoCRMService: CrmService,
   ) {}
 
   @Get('test-crm')
   testCRM() {
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-call
-    return this.zohoService.createContact({
+    return this.zohoCRMService.createContact({
       First_Name: 'Test',
       Last_Name: 'User',
       Email: 'testuser@gmail.com',

@@ -1,4 +1,4 @@
-
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
@@ -15,8 +15,7 @@ export class AuthService {
     @InjectModel(User.name) private userModel: Model<User>,
     private jwtService: JwtService,
     private zohoCRMService: CrmService,
-  ) { }
-
+  ) {}
 
   async createGuest() {
     const guest = await this.userModel.create({
@@ -27,7 +26,6 @@ export class AuthService {
 
     return guest;
   }
-
 
   async sendOtp(mobile_number: string) {
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
@@ -51,12 +49,10 @@ export class AuthService {
 
     await user.save();
 
-
     console.log('OTP:', otp);
 
     return { message: 'OTP sent successfully' };
   }
-
 
   async verifyOtp(mobile_number: string, otp: string) {
     const user = await this.userModel.findOne({ mobile_number });
@@ -77,15 +73,12 @@ export class AuthService {
       throw new Error('Invalid OTP');
     }
 
-
     user.last_login_at = new Date();
     user.otp = null;
 
-
     if (!user.zoho_contact_id) {
       try {
-        const contactId =
-          await this.zohoCRMService.upsertContact(user);
+        const contactId = await this.zohoCRMService.upsertContact(user);
 
         user.zoho_contact_id = contactId;
       } catch (error) {

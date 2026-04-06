@@ -9,16 +9,6 @@ export class AppController {
     private readonly zohoCRMService: CrmService,
   ) {}
 
-  @Get('test-crm')
-  testCRM() {
-    return this.zohoCRMService.createContact({
-      First_Name: 'Test',
-      Last_Name: 'User',
-      Email: 'testuser@gmail.com',
-      Phone: '9876543210',
-    });
-  }
-
   @Get()
   getHello(): string {
     return this.appService.getHello();

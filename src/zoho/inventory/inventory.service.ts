@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
+/* eslint-disable @typescript-eslint/no-unsafe-return */
 // zoho/inventory/zoho-inventory.service.ts
 
 import { Injectable } from '@nestjs/common';

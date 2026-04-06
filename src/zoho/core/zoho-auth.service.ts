@@ -1,5 +1,7 @@
+/* eslint-disable @typescript-eslint/no-unsafe-return */
+/* eslint-disable @typescript-eslint/no-unsafe-member-access */
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
 // zoho/core/zoho-auth.service.ts
-
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { ZohoToken } from '../schemas/zoho-token.schema';
@@ -16,31 +18,25 @@ export class ZohoAuthService {
 
   // ✅ FIXED: supports service
   async exchangeCodeForToken(code: string, service: string) {
-    const clientId =
-      this.configService.getOrThrow('ZOHO_CLIENT_ID');
+    const clientId = this.configService.getOrThrow('ZOHO_CLIENT_ID');
 
-    const clientSecret =
-      this.configService.getOrThrow('ZOHO_CLIENT_SECRET');
+    const clientSecret = this.configService.getOrThrow('ZOHO_CLIENT_SECRET');
 
-    const redirectUri =
-      this.configService.getOrThrow('ZOHO_REDIRECT_URI');
+    const redirectUri = this.configService.getOrThrow('ZOHO_REDIRECT_URI');
 
-    const response = await fetch(
-      'https://accounts.zoho.in/oauth/v2/token',
-      {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded',
-        },
-        body: new URLSearchParams({
-          grant_type: 'authorization_code',
-          client_id: clientId,
-          client_secret: clientSecret,
-          redirect_uri: redirectUri,
-          code,
-        }),
+    const response = await fetch('https://accounts.zoho.in/oauth/v2/token', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
       },
-    );
+      body: new URLSearchParams({
+        grant_type: 'authorization_code',
+        client_id: clientId,
+        client_secret: clientSecret,
+        redirect_uri: redirectUri,
+        code,
+      }),
+    });
 
     const data = await response.json();
 
@@ -50,6 +46,7 @@ export class ZohoAuthService {
     await this.tokenModel.findOneAndUpdate(
       { service },
       {
+        service,
         access_token: data.access_token,
         refresh_token: data.refresh_token,
         expires_at: Date.now() + data.expires_in * 1000,
@@ -68,13 +65,10 @@ export class ZohoAuthService {
     }
 
     if (Date.now() >= tokenDoc.expires_at - 60000) {
-      const newToken = await this.refreshAccessToken(
-        tokenDoc.refresh_token,
-      );
+      const newToken = await this.refreshAccessToken(tokenDoc.refresh_token);
 
       tokenDoc.access_token = newToken.access_token;
-      tokenDoc.expires_at =
-        Date.now() + newToken.expires_in * 1000;
+      tokenDoc.expires_at = Date.now() + newToken.expires_in * 1000;
 
       await tokenDoc.save();
     }
@@ -83,28 +77,22 @@ export class ZohoAuthService {
   }
 
   async refreshAccessToken(refreshToken: string) {
-    const clientId =
-      this.configService.getOrThrow('ZOHO_CLIENT_ID');
+    const clientId = this.configService.getOrThrow('ZOHO_CLIENT_ID');
 
-    const clientSecret =
-      this.configService.getOrThrow('ZOHO_CLIENT_SECRET');
+    const clientSecret = this.configService.getOrThrow('ZOHO_CLIENT_SECRET');
 
-    const response = await fetch(
-      'https://accounts.zoho.in/oauth/v2/token',
-      {
-        method: 'POST',
-        headers: {
-          'Content-Type':
-            'application/x-www-form-urlencoded',
-        },
-        body: new URLSearchParams({
-          grant_type: 'refresh_token',
-          client_id: clientId,
-          client_secret: clientSecret,
-          refresh_token: refreshToken,
-        }),
+    const response = await fetch('https://accounts.zoho.in/oauth/v2/token', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
       },
-    );
+      body: new URLSearchParams({
+        grant_type: 'refresh_token',
+        client_id: clientId,
+        client_secret: clientSecret,
+        refresh_token: refreshToken,
+      }),
+    });
 
     const data = await response.json();
 

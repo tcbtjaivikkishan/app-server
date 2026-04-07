@@ -4,12 +4,16 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { User } from './schemas/user.schema';
 import { v4 as uuidv4 } from 'uuid';
+import { CrmService } from '../zoho/crm/crm.service';
 
 @Injectable()
 export class UsersService {
+  [x: string]: any;
   constructor(
     @InjectModel(User.name)
     private userModel: Model<User>,
+
+    private crmService: CrmService,
   ) {}
 
   // 🔹 Create Guest
@@ -47,9 +51,28 @@ export class UsersService {
 
   // 🔹 Update user
   async updateUser(id: string, data: any) {
-    return this.userModel.findByIdAndUpdate(id, data, {
+    const cleanId = id.replace(/[^a-fA-F0-9]/g, '');
+
+    const user = await this.userModel.findByIdAndUpdate(cleanId, data, {
       new: true,
     });
+
+    if (!user) throw new Error('User not found');
+
+    // CRM sync
+    if (user.zoho_contact_id) {
+      try {
+        await this.crmService.updateContact(user.zoho_contact_id, {
+          First_Name: user.name,
+          Email: user.email,
+          Phone: user.mobile_number,
+        });
+      } catch (error) {
+        console.error('CRM update failed:', error);
+      }
+    }
+
+    return user;
   }
 
   // 🔹 Convert guest → registered
@@ -66,10 +89,28 @@ export class UsersService {
 
   // 🔹 Add address
   async addAddress(userId: string, address: any) {
-    return this.userModel.findByIdAndUpdate(
+    const user = await this.userModel.findByIdAndUpdate(
       userId,
       { $push: { addresses: address } },
       { new: true },
     );
+
+    if (!user) return null;
+
+    // 🔥 Optional CRM sync (only if needed)
+    if (user.zoho_contact_id) {
+      try {
+        await this.crmService.updateContact(user.zoho_contact_id, {
+          Mailing_Street: address.line1,
+          Mailing_City: address.city,
+          Mailing_State: address.state,
+          Mailing_Zip: address.pincode,
+        });
+      } catch (e) {
+        console.error('CRM address update failed:', e);
+      }
+    }
+
+    return user;
   }
 }

@@ -22,6 +22,21 @@ export class CrmService {
     return res?.data?.[0]?.details?.id;
   }
 
+  async updateContact(contactId: string, data: any) {
+    return this.http.request(
+      'crm',
+      'PUT',
+      'https://www.zohoapis.in/crm/v2/Contacts',
+      {
+        data: [
+          {
+            id: contactId,
+            ...data,
+          },
+        ],
+      },
+    );
+  }
   async upsertContact(user: any) {
     const search = await this.http.request(
       'crm',

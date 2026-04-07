@@ -6,8 +6,7 @@ import * as bcrypt from 'bcrypt';
 import { JwtService } from '@nestjs/jwt';
 import { v4 as uuidv4 } from 'uuid';
 import { User } from '../users/schemas/user.schema';
-import { CrmService } from '../zoho/crm/crm.service';
-import { ZohoModule } from '../zoho/zoho.module';
+import { CrmService } from '../../zoho/crm/crm.service';
 
 @Injectable()
 export class AuthService {

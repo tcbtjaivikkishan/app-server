@@ -11,7 +11,7 @@ import { OrdersModule } from './orders/orders.module';
 import { UsersModule } from './users/users.module';
 import { AuthModule } from './auth/auth.module';
 import { CallbackController } from './callback.controller';
-
+import { UploadModule } from './upload/upload.module';
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
@@ -29,6 +29,7 @@ import { CallbackController } from './callback.controller';
     OrdersModule,
     UsersModule,
     AuthModule,
+    UploadModule,
   ],
   controllers: [AppController, CallbackController],
   providers: [AppService],

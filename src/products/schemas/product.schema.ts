@@ -33,12 +33,20 @@ export class Product {
   @Prop({ default: true })
   track_inventory: boolean;
 
-  // AWS S3 image URL (MANUAL upload)
-  @Prop()
+  // S3 image URL — set after syncing image from Zoho → S3
+  @Prop({ default: '' })
   image_url: string;
 
-  // Zoho image reference (optional)
-  @Prop()
+  // S3 key — used to delete old image when product image is updated
+  @Prop({ default: '' })
+  image_key: string;
+ 
+  // After image_key prop
+@Prop({ default: '' })
+image_hash: string;
+
+  // Zoho image reference
+  @Prop({ default: '' })
   zoho_image_document_id: string;
 
   @Prop({ default: true })
@@ -47,16 +55,16 @@ export class Product {
   @Prop({ default: true })
   show_in_storefront: boolean;
 
-  @Prop()
+  @Prop({ default: 0 })
   weight: number;
 
-  @Prop()
+  @Prop({ default: 0 })
   length: number;
 
-  @Prop()
+  @Prop({ default: 0 })
   width: number;
 
-  @Prop()
+  @Prop({ default: 0 })
   height: number;
 }
 

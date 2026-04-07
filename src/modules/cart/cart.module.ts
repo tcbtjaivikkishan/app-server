@@ -1,10 +1,14 @@
 import { Module } from '@nestjs/common';
 import { CartService } from './cart.service';
 import { CartController } from './cart.controller';
-import { RedisModule } from 'src/common/redis/redis.module';
+import { RedisModule } from '../../common/redis/redis.module';
+import { ProductsModule } from '../products/products.module';
 
 @Module({
-    imports: [RedisModule],
+    imports: [
+        RedisModule,
+        ProductsModule,
+    ],
     controllers: [CartController],
     providers: [CartService],
 })

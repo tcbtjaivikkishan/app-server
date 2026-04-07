@@ -3,7 +3,7 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Cron } from '@nestjs/schedule';
 import { Product } from './schemas/product.schema';
 import { Model } from 'mongoose';
-import { ZohoInventoryService } from '../zoho/inventory/inventory.service';
+import { ZohoInventoryService } from '../../zoho/inventory/inventory.service';
 
 @Injectable()
 export class ProductsService {

@@ -3,35 +3,72 @@ import Redis from 'ioredis';
 
 @Injectable()
 export class RedisService implements OnModuleInit {
-  private client!: Redis; // ✅ FIXED
+  private client: Redis | null = null;
+  private isConnected = false;
 
   onModuleInit() {
-    this.client = new Redis({
-      host: '127.0.0.1',
-      port: 6379,
-    });
+    try {
+      this.client = new Redis({
+        host: process.env.REDIS_HOST || '127.0.0.1',
+        port: 6379,
+        lazyConnect: true, // ✅ prevents immediate crash
+        maxRetriesPerRequest: 1,
+      });
 
-    this.client.on('connect', () => {
-      console.log('✅ Redis connected');
-    });
+      this.client.connect().catch(() => {
+        console.warn('⚠️ Redis not available, running without cache');
+      });
+
+      this.client.on('connect', () => {
+        this.isConnected = true;
+        console.log('✅ Redis connected');
+      });
+
+      this.client.on('error', () => {
+        this.isConnected = false;
+        console.warn('⚠️ Redis error, fallback mode');
+      });
+
+    } catch (err) {
+      console.warn('⚠️ Redis disabled');
+      this.client = null;
+    }
   }
 
   async set(key: string, value: any, ttl?: number) {
-    const data = JSON.stringify(value);
+    if (!this.client || !this.isConnected) return; // ✅ skip safely
 
-    if (ttl) {
-      await this.client.set(key, data, 'EX', ttl);
-    } else {
-      await this.client.set(key, data);
+    try {
+      const data = JSON.stringify(value);
+
+      if (ttl) {
+        await this.client.set(key, data, 'EX', ttl);
+      } else {
+        await this.client.set(key, data);
+      }
+    } catch {
+      // silent fail
     }
   }
 
   async get(key: string) {
-    const data = await this.client.get(key);
-    return data ? JSON.parse(data) : null;
+    if (!this.client || !this.isConnected) return null; // ✅ fallback
+
+    try {
+      const data = await this.client.get(key);
+      return data ? JSON.parse(data) : null;
+    } catch {
+      return null;
+    }
   }
 
   async del(key: string) {
-    return this.client.del(key);
+    if (!this.client || !this.isConnected) return;
+
+    try {
+      return await this.client.del(key);
+    } catch {
+      return;
+    }
   }
 }

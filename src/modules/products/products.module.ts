@@ -3,7 +3,7 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { Product, ProductSchema } from './schemas/product.schema';
 import { ProductsService } from './products.service';
 import { ProductsController } from './products.controller';
-import { ZohoModule } from '../zoho/zoho.module';
+import { ZohoModule } from '../../zoho/zoho.module';
 
 @Module({
   imports: [
@@ -14,5 +14,6 @@ import { ZohoModule } from '../zoho/zoho.module';
   ],
   controllers: [ProductsController],
   providers: [ProductsService],
+  exports: [MongooseModule],
 })
-export class ProductsModule {}
+export class ProductsModule { }

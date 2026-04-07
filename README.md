@@ -95,35 +95,119 @@ Key Principle:
 
 ```
 src/
- ├── app.controller.ts               # Root controller (Zoho callback)
- ├── app.service.ts
- │
- ├── zoho/
- │    ├── core/
- │    │    ├── zoho-auth.service.ts  # Token management (multi-service)
- │    │    └── zoho-http.service.ts  # Generic Zoho API client
- │    ├── crm/
- │    │    └── zoho-crm.service.ts   # CRM operations
- │    ├── inventory/
- │    │    └── zoho-inventory.service.ts
- │    ├── schemas/
- │    │    └── zoho-token.schema.ts
- │    └── zoho.module.ts
- │
- ├── products/
- │    ├── schemas/
- │    ├── products.service.ts
- │    ├── products.controller.ts
- │    └── products.module.ts
- │
- ├── users/
- │    ├── schemas/
- │    └── user.service.ts
- │
- ├── auth/
- │    └── auth.service.ts
- │
- └── orders/                         # WIP
+│
+├── main.ts
+├── app.module.ts
+│
+├── config/                     # Global configuration
+│   ├── configuration.ts
+│   └── env.validation.ts
+│
+├── common/                     # Shared utilities (GLOBAL)
+│   ├── decorators/
+│   ├── redis/
+│   ├── interceptors/
+│   └── utils/
+│
+├── database/                   # DB setup
+│   └── mongo/
+│       ├── mongo.module.ts
+│       └── mongo.providers.ts
+│
+├── modules/                    # 💥 DOMAIN-DRIVEN MODULES
+│   ├── auth/
+│   │    ├── controllers/
+│   │    │    └── auth.controller.ts
+│   │    ├── services/
+│   │    │    ├── auth.service.ts
+│   │    │    ├── otp.service.ts
+│   │    │    └── jwt.service.ts
+│   │    ├── strategies/
+│   │    │    └── jwt.strategy.ts
+│   │    ├── guards/
+│   │    ├── dto/
+│   │    ├── interfaces/
+│   │    └── auth.module.ts
+│   │
+│   ├── users/
+│   │    ├── controllers/
+│   │    ├── services/
+│   │    │    └── users.service.ts
+│   │    ├── schemas/
+│   │    ├── dto/
+│   │    └── users.module.ts
+│   │
+│   ├── products/
+│   │    ├── controllers/
+│   │    │    └── products.controller.ts
+│   │    ├── services/
+│   │    │    ├── products.service.ts
+│   │    │    └── product-query.service.ts   # filtering logic
+│   │    ├── schemas/
+│   │    ├── dto/
+│   │    ├── interfaces/
+│   │    └── products.module.ts
+│   │
+│   ├── orders/                 # IMPORTANT: separate domain
+│   │    ├── controllers/
+│   │    ├── services/
+│   │    │    ├── orders.service.ts
+│   │    │    ├── order-processing.service.ts
+│   │    ├── schemas/
+│   │    ├── dto/
+│   │    └── orders.module.ts
+│   │
+│   ├── commissions/
+│   │    ├── services/
+│   │    ├── schemas/
+│   │    └── commissions.module.ts
+│   │
+│   ├── referrals/
+│   │    ├── services/
+│   │    └── referrals.module.ts
+│
+├── integrations/              # 🔌 EXTERNAL SERVICES (VERY IMPORTANT)
+│
+│   ├── zoho/
+│   │    ├── core/
+│   │    │    ├── zoho-auth.service.ts
+│   │    │    ├── zoho-http.service.ts
+│   │    │
+│   │    ├── crm/
+│   │    │    └── zoho-crm.service.ts
+│   │    │
+│   │    ├── inventory/
+│   │    │    └── zoho-inventory.service.ts
+│   │    │
+│   │    ├── schemas/
+│   │    ├── dto/
+│   │    └── zoho.module.ts
+│   │
+│   ├── aws/
+│   │    ├── s3.service.ts
+│   │    └── aws.module.ts
+│   │
+│   └── payments/
+│        ├── zoho-payment-gateway.service.ts
+│        └── payments.module.ts
+│
+├── jobs/                      # 🧠 BACKGROUND WORKERS (CRON / QUEUES)
+│   ├── cron/
+│   │    ├── product-sync.job.ts      # Zoho sync
+│   │    └── commission.job.ts
+│   │
+│   ├── queues/                # (future BullMQ)
+│   └── jobs.module.ts
+│
+├── cache/                     # Redis layer
+│   ├── redis.module.ts
+│   └── cache.service.ts
+│
+├── events/                    # Event-driven architecture (advanced)
+│   ├── events.module.ts
+│   └── handlers/
+│
+└── shared/                    # reusable domain logic (optional)
 ```
 
 ---

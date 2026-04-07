@@ -4,7 +4,7 @@ import { AuthController } from './auth.controller';
 import { JwtModule } from '@nestjs/jwt';
 import { MongooseModule } from '@nestjs/mongoose';
 import { User, UserSchema } from '../users/schemas/user.schema';
-import { ZohoModule } from '../zoho/zoho.module';
+import { ZohoModule } from '../../zoho/zoho.module';
 
 @Module({
   imports: [

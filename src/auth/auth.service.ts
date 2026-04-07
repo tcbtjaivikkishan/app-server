@@ -7,7 +7,6 @@ import { JwtService } from '@nestjs/jwt';
 import { v4 as uuidv4 } from 'uuid';
 import { User } from '../users/schemas/user.schema';
 import { ZohoService } from '../zoho/zoho.service';
-import { ZohoModule } from '../zoho/zoho.module';
 
 @Injectable()
 export class AuthService {

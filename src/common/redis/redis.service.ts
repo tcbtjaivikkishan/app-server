@@ -26,7 +26,7 @@ export class RedisService implements OnModuleInit {
 
       this.client.on('error', () => {
         this.isConnected = false;
-        console.warn('⚠️ Redis error, fallback mode');
+        // console.warn('⚠️ Redis error, fallback mode');
       });
 
     } catch (err) {

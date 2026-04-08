@@ -5,37 +5,39 @@ import {
   Delete,
   Body,
   Param,
+  Req,
+  UseGuards,
 } from '@nestjs/common';
 import { WishlistService } from './wishlist.service';
+import { AddToWishlistDto } from './dto/add-to-wishlist.dto';
+import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 
+@UseGuards(JwtAuthGuard)
 @Controller('wishlist')
 export class WishlistController {
   constructor(private wishlistService: WishlistService) {}
 
   // ✅ Get wishlist
-  @Get(':userId')
-  get(@Param('userId') userId: string) {
-    return this.wishlistService.getWishlist(userId);
+  @Get()
+  get(@Req() req: any) {
+    return this.wishlistService.getWishlist(req.user.userId);
   }
 
   // ✅ Add item
   @Post()
-  add(@Body() body: any) {
+  add(@Req() req: any, @Body() dto: AddToWishlistDto) {
     return this.wishlistService.addToWishlist(
-      body.userId,
-      body.product,
+      req.user.userId,
+      dto.zoho_item_id,
     );
   }
 
   // ✅ Remove item
-  @Delete(':productId')
-  remove(
-    @Param('productId') productId: string,
-    @Body() body: any,
-  ) {
+  @Delete(':zoho_item_id')
+  remove(@Req() req: any, @Param('zoho_item_id') zoho_item_id: string) {
     return this.wishlistService.removeFromWishlist(
-      body.userId,
-      productId,
+      req.user.userId,
+      zoho_item_id,
     );
   }
 }

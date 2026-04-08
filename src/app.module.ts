@@ -13,6 +13,7 @@ import { CallbackController } from './zoho/callback.controller';
 import { CategoryModule } from './modules/categories/categories.module';
 import { RedisModule } from './common/redis/redis.module';
 import { CartModule } from './modules/cart/cart.module';
+import { WishlistModule } from './modules/wishlist/wishlist.module';
 
 @Module({
   imports: [
@@ -34,6 +35,7 @@ import { CartModule } from './modules/cart/cart.module';
     CategoryModule,
     RedisModule,
     CartModule,
+    WishlistModule,
   ],
   controllers: [AppController, CallbackController],
   providers: [AppService],

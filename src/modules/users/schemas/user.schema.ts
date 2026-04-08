@@ -4,37 +4,37 @@ import { Document } from 'mongoose';
 @Schema({ _id: false })
 class OTP {
   @Prop()
-  code: string; // hashed OTP
+  code!: string;
 
   @Prop()
-  expires_at: Date;
+  expires_at!: Date;
 
   @Prop({ default: 0 })
-  attempts: number;
+  attempts!: number;
 }
 
 @Schema({ _id: true })
 class Address {
   @Prop({ required: true })
-  label: string; // Home, Office
+  label!: string;
 
   @Prop({ required: true })
-  line1: string;
+  line1!: string;
 
   @Prop()
-  line2: string;
+  line2?: string;
 
   @Prop({ required: true })
-  city: string;
+  city!: string;
 
   @Prop({ required: true })
-  state: string;
+  state!: string;
 
   @Prop({ required: true })
-  pincode: string;
+  pincode!: string;
 
   @Prop({ default: false })
-  is_default: boolean;
+  is_default!: boolean;
 }
 
 @Schema({
@@ -45,44 +45,43 @@ class Address {
 })
 export class User extends Document {
   @Prop({ required: true, unique: true })
-  mobile_number: string;
+  mobile_number!: string;
 
   @Prop({ default: false })
-  is_guest: boolean;
+  is_guest!: boolean;
 
   @Prop()
-  guest_session_id: string;
+  guest_session_id?: string;
 
   @Prop()
-  password_hash: string; // null for OTP users
+  password_hash?: string;
 
   @Prop()
-  name: string;
+  name?: string;
 
   @Prop({ sparse: true })
-  email: string;
+  email?: string;
 
   @Prop({ type: OTP })
-  otp: OTP | null;
+  otp?: OTP | null;
 
   @Prop({ type: [Address], default: [] })
-  addresses: Address[];
+  addresses!: Address[];
 
   @Prop({ type: [String], default: [] })
-  fcm_tokens: string[];
+  fcm_tokens!: string[];
 
   @Prop({ default: true })
-  is_active: boolean;
+  is_active!: boolean;
 
   @Prop({ default: false })
-  is_deleted: boolean;
+  is_deleted!: boolean;
 
   @Prop()
-  last_login_at: Date;
+  last_login_at?: Date;
 
-  // 🔥 IMPORTANT: CRM LINK
   @Prop()
-  zoho_contact_id: string;
+  zoho_contact_id?: string;
 }
 
 export const UserSchema = SchemaFactory.createForClass(User);

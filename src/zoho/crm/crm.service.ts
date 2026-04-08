@@ -1,3 +1,6 @@
+/* eslint-disable @typescript-eslint/no-unsafe-member-access */
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
+/* eslint-disable @typescript-eslint/no-unsafe-return */
 // zoho/crm/zoho-crm.service.ts
 
 import { Injectable } from '@nestjs/common';
@@ -8,27 +11,42 @@ export class CrmService {
   constructor(private http: ZohoHttpService) {}
 
   async createContact(data: any) {
-    return this.http.request(
-      'crm',
+    const res = await this.http.request(
       'POST',
       'https://www.zohoapis.in/crm/v2/Contacts',
       { data: [data] },
     );
+
+    // ✅ RETURN ONLY ID
+    return res?.data?.[0]?.details?.id;
   }
 
+  async updateContact(contactId: string, data: any) {
+    return this.http.request('PUT', 'https://www.zohoapis.in/crm/v2/Contacts', {
+      data: [
+        {
+          id: contactId,
+          ...data,
+        },
+      ],
+    });
+  }
   async upsertContact(user: any) {
     const search = await this.http.request(
-      'crm',
       'GET',
-      `https://www.zohoapis.in/crm/v2/Contacts/search?phone=${user.mobile_number}`,
+      `https://www.zohoapis.in/crm/v2/Contacts/search?criteria=(Phone:equals:${user.mobile_number})`,
     );
 
-    if (search.data?.length) {
+    console.log('Zoho search response:', search);
+
+    // ✅ FULL SAFE GUARD
+    if (search && Array.isArray(search.data) && search.data.length > 0) {
       return search.data[0].id;
     }
 
+    // ⚠️ If null → still continue
     return this.createContact({
-      First_Name: user.name,
+      First_Name: user.name || 'Guest',
       Last_Name: 'Customer',
       Phone: user.mobile_number,
       Email: user.email,

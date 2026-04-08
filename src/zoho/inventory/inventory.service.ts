@@ -9,15 +9,14 @@ export class ZohoInventoryService {
   constructor(
     private http: ZohoHttpService,
     private config: ConfigService,
-  ) {}
+  ) { }
 
-  async getItems(page: number, perPage: number) {
+  async getItems(page = 1, perPage = 200) {
     const orgId = this.config.get('ZOHO_ORG_ID');
 
     return this.http.request(
-      'inventory',
       'GET',
-      `https://www.zohoapis.in/inventory/v1/items?organization_id=${orgId}`,
+      `https://www.zohoapis.in/inventory/v1/items?organization_id=${orgId}&page=${page}&per_page=${perPage}`,
     );
   }
 }

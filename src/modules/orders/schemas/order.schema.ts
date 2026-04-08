@@ -8,7 +8,7 @@ export class Order {
   @Prop({ required: true })
   userId!: string;
 
-  @Prop({ required: true })
+  @Prop({ required: true, unique: true })
   orderId!: string;
 
   @Prop({ type: Array, required: true })
@@ -21,22 +21,30 @@ export class Order {
     image?: string;
   }[];
 
-  @Prop()
+  @Prop({ required: true })
   totalAmount!: number;
 
-  @Prop()
+  @Prop({ required: true })
   shippingCharge!: number;
 
-  @Prop()
+  @Prop({ required: true })
   finalAmount!: number;
 
-  @Prop({ default: 'created' })
+  // 📦 ORDER STATUS
+  @Prop({
+    enum: ['created', 'confirmed', 'shipped', 'delivered', 'cancelled'],
+    default: 'created',
+  })
   orderStatus!: string;
 
-  @Prop({ default: 'pending' })
+  // 💳 PAYMENT STATUS
+  @Prop({
+    enum: ['pending', 'paid', 'failed'],
+    default: 'pending',
+  })
   paymentStatus!: string;
 
-  @Prop({ type: Object })
+  @Prop({ type: Object, required: true })
   address!: {
     name: string;
     phone: string;
@@ -46,11 +54,16 @@ export class Order {
     addressLine: string;
   };
 
+  // 💳 Payment Fields
   @Prop()
-  zohoSalesOrderId?: string;
+  paymentSessionId?: string;
 
   @Prop()
   paymentId?: string;
+
+  // 📦 Future (Zoho Inventory)
+  @Prop()
+  zohoSalesOrderId?: string;
 }
 
 export const OrderSchema = SchemaFactory.createForClass(Order);

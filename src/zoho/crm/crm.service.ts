@@ -12,7 +12,6 @@ export class CrmService {
 
   async createContact(data: any) {
     const res = await this.http.request(
-      'crm',
       'POST',
       'https://www.zohoapis.in/crm/v2/Contacts',
       { data: [data] },
@@ -23,23 +22,17 @@ export class CrmService {
   }
 
   async updateContact(contactId: string, data: any) {
-    return this.http.request(
-      'crm',
-      'PUT',
-      'https://www.zohoapis.in/crm/v2/Contacts',
-      {
-        data: [
-          {
-            id: contactId,
-            ...data,
-          },
-        ],
-      },
-    );
+    return this.http.request('PUT', 'https://www.zohoapis.in/crm/v2/Contacts', {
+      data: [
+        {
+          id: contactId,
+          ...data,
+        },
+      ],
+    });
   }
   async upsertContact(user: any) {
     const search = await this.http.request(
-      'crm',
       'GET',
       `https://www.zohoapis.in/crm/v2/Contacts/search?criteria=(Phone:equals:${user.mobile_number})`,
     );

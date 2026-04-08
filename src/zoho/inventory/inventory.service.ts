@@ -17,7 +17,6 @@ export class ZohoInventoryService {
     const orgId = this.config.get('ZOHO_ORG_ID');
 
     return this.http.request(
-      'inventory',
       'GET',
       `https://www.zohoapis.in/inventory/v1/items?organization_id=${orgId}`,
     );

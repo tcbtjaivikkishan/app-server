@@ -57,28 +57,22 @@ export class ZohoAuthService {
     return data;
   }
 
-  async getValidAccessToken(service: string): Promise<string> {
-    const tokenDoc = await this.tokenModel.findOne({ service });
+  async getValidAccessToken() {
+    const token = await this.tokenModel.findOne();
 
-    if (!tokenDoc) {
-      throw new Error(`${service} token not found`);
+    if (!token) {
+      throw new Error('Zoho token not found. Please re-authenticate.');
     }
 
-    if (Date.now() >= tokenDoc.expires_at - 60000) {
-      const newToken = await this.refreshAccessToken(tokenDoc.refresh_token);
-
-      tokenDoc.access_token = newToken.access_token;
-      tokenDoc.expires_at = Date.now() + newToken.expires_in * 1000;
-
-      await tokenDoc.save();
+    if (Date.now() > token.expires_at) {
+      return this.refreshAccessToken(token);
     }
 
-    return tokenDoc.access_token;
+    return token.access_token;
   }
 
-  async refreshAccessToken(refreshToken: string) {
+  async refreshAccessToken(tokenDoc: ZohoToken) {
     const clientId = this.configService.getOrThrow('ZOHO_CLIENT_ID');
-
     const clientSecret = this.configService.getOrThrow('ZOHO_CLIENT_SECRET');
 
     const response = await fetch('https://accounts.zoho.in/oauth/v2/token', {
@@ -87,17 +81,20 @@ export class ZohoAuthService {
         'Content-Type': 'application/x-www-form-urlencoded',
       },
       body: new URLSearchParams({
-        grant_type: 'refresh_token',
+        refresh_token: tokenDoc.refresh_token,
         client_id: clientId,
         client_secret: clientSecret,
-        refresh_token: refreshToken,
+        grant_type: 'refresh_token',
       }),
     });
 
     const data = await response.json();
 
-    if (data.error) throw new Error(data.error);
+    tokenDoc.access_token = data.access_token;
+    tokenDoc.expires_at = Date.now() + data.expires_in * 1000;
 
-    return data;
+    await tokenDoc.save();
+
+    return tokenDoc.access_token;
   }
 }

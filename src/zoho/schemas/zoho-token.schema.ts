@@ -15,6 +15,7 @@ export class ZohoToken {
 
   @Prop({ required: true })
   expires_at: number;
+  save: any;
 }
 
 export const ZohoTokenSchema = SchemaFactory.createForClass(ZohoToken);

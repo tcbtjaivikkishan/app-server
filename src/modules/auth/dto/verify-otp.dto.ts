@@ -1,4 +1,13 @@
+import { IsString, IsNotEmpty, Matches } from 'class-validator';
+
 export class VerifyOtpDto {
-  mobile_number: string;
-  otp: string;
+  @IsString()
+  @IsNotEmpty()
+  mobile_number!: string;
+
+  @IsString()
+  @Matches(/^\d{4,6}$/, {
+    message: 'Invalid OTP',
+  })
+  otp!: string;
 }

@@ -1,3 +1,7 @@
+import { IsString, IsNotEmpty } from 'class-validator';
+
 export class SendOtpDto {
-  mobile_number: string;
+  @IsString()
+  @IsNotEmpty()
+  mobile_number!: string;
 }

@@ -11,12 +11,13 @@ export class ZohoInventoryService {
     private config: ConfigService,
   ) { }
 
-  async getItems(page = 1, perPage = 200) {
-    const orgId = this.config.get('ZOHO_ORG_ID');
+  async getItems(page = 1, perPage = 200): Promise<any> {
+    const orgId: string = this.config.get('ZOHO_ORG_ID') || '';
 
     return this.http.request(
       'GET',
       `https://www.zohoapis.in/inventory/v1/items?organization_id=${orgId}&page=${page}&per_page=${perPage}`,
+      'inventory',
     );
   }
 }

@@ -14,10 +14,12 @@ import { CategoryModule } from './modules/categories/categories.module';
 import { RedisModule } from './common/redis/redis.module';
 import { CartModule } from './modules/cart/cart.module';
 import { WishlistModule } from './modules/wishlist/wishlist.module';
+import { ShipmentModule } from './integrations/shipment/shipment.module';
+import delhiveryConfig from './integrations/shipment/delhivery.config';
 
 @Module({
   imports: [
-    ConfigModule.forRoot({ isGlobal: true }),
+    ConfigModule.forRoot({ isGlobal: true, load: [delhiveryConfig] }),
 
     MongooseModule.forRootAsync({
       inject: [ConfigService],
@@ -36,6 +38,7 @@ import { WishlistModule } from './modules/wishlist/wishlist.module';
     RedisModule,
     CartModule,
     WishlistModule,
+    ShipmentModule,
   ],
   controllers: [AppController, CallbackController],
   providers: [AppService],

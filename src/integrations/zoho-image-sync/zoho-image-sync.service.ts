@@ -23,7 +23,6 @@ export class ZohoImageSyncService {
     private readonly productModel: Model<Product>,
   ) {}
 
-  // ✅ Edge case 1: Product deleted in Zoho
   async deactivateItem(itemId: string): Promise<void> {
     this.logger.log(`🗑️ Deactivating item: ${itemId}`);
 
@@ -39,7 +38,6 @@ export class ZohoImageSyncService {
     this.logger.log(`✅ Item ${itemId} marked inactive`);
   }
 
-  // ✅ Retry wrapper for Zoho API rate limits / timeouts
   private async withRetry<T>(
     fn: () => Promise<T>,
     label: string,
@@ -77,6 +75,7 @@ export class ZohoImageSyncService {
       () => this.zohoHttpService.request(
         'GET',
         `https://www.zohoapis.in/inventory/v1/items/${itemId}?organization_id=${orgId}`,
+        'inventory',
       ),
       'Fetch item',
     );
@@ -113,7 +112,6 @@ export class ZohoImageSyncService {
       width: item.width || 0,
       height: item.height || 0,
       is_active: item.status === 'active',
-      // ✅ Edge case 3: hide from storefront if out of stock
       show_in_storefront:
         item.status === 'active' &&
         (item.actual_available_stock ?? item.stock_on_hand ?? 0) > 0,
@@ -121,7 +119,7 @@ export class ZohoImageSyncService {
 
     const imageName = item?.image_name;
 
-    // ✅ Edge case 2: Image was removed in Zoho
+    // Edge case 2: Image was removed in Zoho
     if (!imageName && existingProduct?.image_url) {
       this.logger.warn(`🗑️ Image removed in Zoho for item ${itemId} — clearing image fields`);
 
@@ -169,9 +167,8 @@ export class ZohoImageSyncService {
 
     // Step 5: Download + upload to S3 with retry
     const imageUrl = `https://www.zohoapis.in/inventory/v1/items/${itemId}/image?organization_id=${orgId}`;
-    const token = await this.zohoAuthService.getValidAccessToken();
+    const token = await this.zohoAuthService.getValidAccessToken('inventory');
 
-    // ✅ Edge cases 4 & 5: retry S3 upload, and only update DB after confirmed upload
     let uploadResult: { s3Url: string; s3Key: string; imageHash: string; skipped: boolean };
 
     try {
@@ -185,7 +182,6 @@ export class ZohoImageSyncService {
         'S3 upload',
       );
     } catch (err: any) {
-      // ✅ Edge case 5: S3 failed — still save product details without image update
       this.logger.error(`❌ S3 upload failed for ${itemId}: ${err.message} — saving product details only`);
 
       await this.productModel.findOneAndUpdate(
@@ -213,7 +209,7 @@ export class ZohoImageSyncService {
       return;
     }
 
-    // Step 6: ✅ S3 confirmed — now save everything to DB
+    // Step 6: S3 confirmed — save everything to DB
     await this.productModel.findOneAndUpdate(
       { zoho_item_id: String(itemId) },
       {

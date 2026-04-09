@@ -13,11 +13,14 @@ import { CallbackController } from './zoho/callback.controller';
 import { CategoryModule } from './modules/categories/categories.module';
 import { RedisModule } from './common/redis/redis.module';
 import { CartModule } from './modules/cart/cart.module';
-import { ZohoImageSyncModule } from './integrations/zoho-image-sync/zoho-image-sync.module'; // ← ADD
+import { WishlistModule } from './modules/wishlist/wishlist.module';
+import { ShipmentModule } from './integrations/shipment/shipment.module';
+import delhiveryConfig from './integrations/shipment/delhivery.config';
+import { ZohoImageSyncModule } from './integrations/zoho-image-sync/zoho-image-sync.module';
 
 @Module({
   imports: [
-    ConfigModule.forRoot({ isGlobal: true }),
+    ConfigModule.forRoot({ isGlobal: true, load: [delhiveryConfig] }),
     MongooseModule.forRootAsync({
       inject: [ConfigService],
       useFactory: (configService: ConfigService) => ({
@@ -33,7 +36,9 @@ import { ZohoImageSyncModule } from './integrations/zoho-image-sync/zoho-image-s
     CategoryModule,
     RedisModule,
     CartModule,
-    ZohoImageSyncModule,  // ← ADD
+    WishlistModule,
+    ShipmentModule,
+    ZohoImageSyncModule,
   ],
   controllers: [AppController, CallbackController],
   providers: [AppService],

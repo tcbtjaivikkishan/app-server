@@ -7,13 +7,13 @@
 
 import { Injectable } from '@nestjs/common';
 import { ZohoAuthService } from './zoho-auth.service';
-
+import { ZohoService } from '../config/zoho-scope.config';
 @Injectable()
 export class ZohoHttpService {
   constructor(private auth: ZohoAuthService) {}
 
-  async request(method: string, url: string, body?: any) {
-    const token = await this.auth.getValidAccessToken();
+  async request(method: string, url: string, service: ZohoService, body?: any) {
+    const token = await this.auth.getValidAccessToken(service);
 
     const res = await fetch(url, {
       method,

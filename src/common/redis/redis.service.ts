@@ -39,6 +39,10 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
           this.errorLogged = true;
         }
         this.isConnected = false;
+<<<<<<< HEAD
+=======
+        // console.warn('⚠️ Redis error, fallback mode');
+>>>>>>> 10c0adbb8c422e5aeb44fa230a241f6db3317e24
       });
 
     } catch {

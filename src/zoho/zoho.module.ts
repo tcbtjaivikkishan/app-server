@@ -2,10 +2,7 @@
 
 import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
-import {
-  ZohoToken,
-  ZohoTokenSchema,
-} from './schemas/zoho-token.schema';
+import { ZohoToken, ZohoTokenSchema } from './schemas/zoho-token.schema';
 
 import { ZohoAuthService } from './core/zoho-auth.service';
 import { ZohoHttpService } from './core/zoho-http.service';
@@ -24,10 +21,6 @@ import { ZohoInventoryService } from './inventory/inventory.service';
     CrmService,
     ZohoInventoryService,
   ],
-  exports: [
-    CrmService,
-    ZohoInventoryService,
-    ZohoAuthService,
-  ],
+  exports: [CrmService, ZohoInventoryService, ZohoAuthService],
 })
 export class ZohoModule {}

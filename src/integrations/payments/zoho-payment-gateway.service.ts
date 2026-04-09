@@ -13,7 +13,7 @@ export class ZohoPaymentGatewayService {
     email: string;
     mobile: string;
   }) {
-    const accessToken = await this.zohoAuth.getValidAccessToken();
+    const accessToken = await this.zohoAuth.getValidAccessToken('payments');
 
     const payload = {
       amount: data.amount,

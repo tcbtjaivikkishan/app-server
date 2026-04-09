@@ -5,7 +5,6 @@ export type ProductDocument = Product & Document;
 
 @Schema({ timestamps: true })
 export class Product {
-
   @Prop({ required: true, unique: true })
   zoho_item_id!: string;
 

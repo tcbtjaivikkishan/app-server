@@ -13,18 +13,17 @@ import { CallbackController } from './zoho/callback.controller';
 import { CategoryModule } from './modules/categories/categories.module';
 import { RedisModule } from './common/redis/redis.module';
 import { CartModule } from './modules/cart/cart.module';
+import { ZohoImageSyncModule } from './integrations/zoho-image-sync/zoho-image-sync.module'; // ← ADD
 
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
-
     MongooseModule.forRootAsync({
       inject: [ConfigService],
       useFactory: (configService: ConfigService) => ({
         uri: configService.get<string>('MONGO_URI'),
       }),
     }),
-
     ZohoModule,
     ProductsModule,
     ScheduleModule.forRoot(),
@@ -34,6 +33,7 @@ import { CartModule } from './modules/cart/cart.module';
     CategoryModule,
     RedisModule,
     CartModule,
+    ZohoImageSyncModule,  // ← ADD
   ],
   controllers: [AppController, CallbackController],
   providers: [AppService],

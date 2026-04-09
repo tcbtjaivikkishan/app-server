@@ -37,7 +37,19 @@ export class Product {
   image_url!: string;
 
   @Prop()
+image_name!: string;
+  @Prop()
   zoho_image_document_id!: string;
+
+  // ✅ NEW: for duplicate prevention
+  @Prop()
+  image_hash!: string;        // MD5 hash of image content
+
+  @Prop()
+  image_s3_key!: string;      // e.g. products/12345.jpg
+
+  @Prop()
+  image_last_synced_at!: Date; // when it was last uploaded
 
   @Prop({ default: true })
   is_active!: boolean;
@@ -60,8 +72,8 @@ export class Product {
 
 export const ProductSchema = SchemaFactory.createForClass(Product);
 
-// Indexes
 ProductSchema.index({ category_id: 1 });
 ProductSchema.index({ name: 'text', description: 'text' });
 ProductSchema.index({ is_active: 1, show_in_storefront: 1 });
 ProductSchema.index({ price: 1 });
+ProductSchema.index({ zoho_item_id: 1 });

@@ -6,12 +6,6 @@ import { VerifyOtpDto } from './dto/verify-otp.dto';
 @Controller('auth')
 export class AuthController {
   constructor(private authService: AuthService) {}
-
-  @Post('guest')
-  createGuest() {
-    return this.authService.createGuest();
-  }
-
   @Post('send-otp')
   sendOtp(@Body() dto: SendOtpDto) {
     return this.authService.sendOtp(dto.mobile_number);

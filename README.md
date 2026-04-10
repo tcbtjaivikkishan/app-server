@@ -404,7 +404,6 @@ JWT issued  →  User authenticated
   "_id":            "ObjectId",
   "mobile_number":  "+91XXXXXXXXXX",
   "role":           "customer | farmer | salesperson",
-  "is_guest":       false,
   "referralCode":   "string",
   "zoho_contact_id":"set after first order only",
   "otp": {

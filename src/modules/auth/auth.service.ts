@@ -3,7 +3,6 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import * as bcrypt from 'bcrypt';
 import { JwtService } from '@nestjs/jwt';
-import { v4 as uuidv4 } from 'uuid';
 import { User } from '../users/schemas/user.schema';
 import { CrmService } from '../../zoho/crm/crm.service';
 
@@ -15,16 +14,6 @@ export class AuthService {
     private zohoCRMService: CrmService,
   ) {}
 
-  async createGuest() {
-    const guest = await this.userModel.create({
-      mobile_number: `guest_${Date.now()}`,
-      is_guest: true,
-      guest_session_id: uuidv4(),
-    });
-
-    return guest;
-  }
-
   async sendOtp(mobile_number: string) {
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
 
@@ -35,7 +24,6 @@ export class AuthService {
     if (!user) {
       user = await this.userModel.create({
         mobile_number,
-        is_guest: false,
       });
     }
 
@@ -78,7 +66,7 @@ export class AuthService {
       try {
         const contactId = await this.zohoCRMService.upsertContact(user);
 
-        user.zoho_contact_id = contactId;
+        user.zoho_contact_id = contactId as string;
       } catch (error) {
         console.error('CRM Sync Failed:', error);
       }

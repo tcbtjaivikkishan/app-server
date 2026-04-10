@@ -4,6 +4,7 @@ import { Product, ProductSchema } from './schemas/product.schema';
 import { ProductsService } from './products.service';
 import { ProductsController } from './products.controller';
 import { ZohoModule } from '../../zoho/zoho.module';
+import { ZohoImageSyncModule } from '../../integrations/zoho-image-sync/zoho-image-sync.module';
 
 @Module({
   imports: [
@@ -11,9 +12,10 @@ import { ZohoModule } from '../../zoho/zoho.module';
       { name: Product.name, schema: ProductSchema },
     ]),
     ZohoModule,
+    ZohoImageSyncModule,
   ],
   controllers: [ProductsController],
   providers: [ProductsService],
   exports: [MongooseModule],
 })
-export class ProductsModule { }
+export class ProductsModule {}

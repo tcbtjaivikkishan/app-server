@@ -17,5 +17,6 @@ import { Product, ProductSchema } from '../../modules/products/schemas/product.s
   ],
   controllers: [ZohoImageSyncController],
   providers: [ZohoImageSyncService, S3UploadService],
+  exports: [ZohoImageSyncService], // ✅ Required for ProductsService
 })
 export class ZohoImageSyncModule {}

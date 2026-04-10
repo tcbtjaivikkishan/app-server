@@ -5,7 +5,7 @@ export type ProductDocument = Product & Document;
 
 @Schema({ timestamps: true })
 export class Product {
-  @Prop({ required: true, unique: true })
+  @Prop({ required: true, unique: true }) // ← unique: true already creates an index
   zoho_item_id!: string;
 
   @Prop({ required: true })
@@ -36,19 +36,19 @@ export class Product {
   image_url!: string;
 
   @Prop()
-image_name!: string;
+  image_name!: string;
+
   @Prop()
   zoho_image_document_id!: string;
 
-  // ✅ NEW: for duplicate prevention
   @Prop()
-  image_hash!: string;        // MD5 hash of image content
+  image_hash!: string;
 
   @Prop()
-  image_s3_key!: string;      // e.g. products/12345.jpg
+  image_s3_key!: string;
 
   @Prop()
-  image_last_synced_at!: Date; // when it was last uploaded
+  image_last_synced_at!: Date;
 
   @Prop({ default: true })
   is_active!: boolean;
@@ -71,8 +71,8 @@ image_name!: string;
 
 export const ProductSchema = SchemaFactory.createForClass(Product);
 
+// ✅ Remove zoho_item_id index here — already handled by unique:true above
 ProductSchema.index({ category_id: 1 });
 ProductSchema.index({ name: 'text', description: 'text' });
 ProductSchema.index({ is_active: 1, show_in_storefront: 1 });
 ProductSchema.index({ price: 1 });
-ProductSchema.index({ zoho_item_id: 1 });

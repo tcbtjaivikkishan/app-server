@@ -1,70 +1,51 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, Logger } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Cron } from '@nestjs/schedule';
 import { Product } from './schemas/product.schema';
 import { Model } from 'mongoose';
 import { ZohoInventoryService } from '../../zoho/inventory/inventory.service';
+import { ZohoImageSyncService } from '../../integrations/zoho-image-sync/zoho-image-sync.service';
 
 @Injectable()
 export class ProductsService {
+  private readonly logger = new Logger(ProductsService.name);
+
   constructor(
     @InjectModel(Product.name)
     private productModel: Model<Product>,
     private zohoInventoryService: ZohoInventoryService,
+    private zohoImageSyncService: ZohoImageSyncService,
   ) {}
 
-  // 🔁 Sync products every 30 minutes
-  @Cron('0 */30 * * * *')
+  // 🔁 Daily safety net sync at 2AM — catches anything webhooks missed
+  @Cron('0 0 2 * * *')
   async syncZohoProducts() {
-    console.log('Starting Zoho product sync...');
+    this.logger.log('🔄 Starting daily safety net sync...');
 
     try {
       let page = 1;
       const perPage = 200;
       let hasMore = true;
+      let synced = 0;
+      let failed = 0;
 
       while (hasMore) {
-        // ✅ Fetch from Zoho via service (NO direct API call here)
-        const response =
-          await this.zohoInventoryService.getItems(page, perPage);
-
+        const response = await this.zohoInventoryService.getItems(page, perPage);
         const items = response.items || [];
 
-        console.log(`Fetched page ${page} items: ${items.length}`);
+        this.logger.log(`📦 Page ${page} — ${items.length} items`);
 
         for (const item of items) {
           try {
-            await this.productModel.updateOne(
-              { zoho_item_id: item.item_id },
-              {
-                $set: {
-                  name: item.name,
-                  description: item.description,
-                  sku: item.sku,
-                  category_id: item.category_id,
-                  category_name: item.category_name,
-                  price: item.rate,
-                  stock: item.available_stock,
-                  track_inventory: item.track_inventory,
-                  zoho_image_document_id: item.image_document_id,
-                  show_in_storefront: item.show_in_storefront,
-                  weight: item.weight,
-                  length: item.length,
-                  width: item.width,
-                  height: item.height,
-                  is_active: item.status === 'active',
-                },
-                $setOnInsert: {
-                  zoho_item_id: item.item_id,
-                },
-              },
-              { upsert: true },
-            );
-          } catch (error) {
-            console.error(
-              `Failed to upsert product ${item.item_id}:`,
-              error,
-            );
+            // ✅ Full sync — product details + image in one call
+            await this.zohoImageSyncService.syncItemImage(item.item_id);
+
+            // ✅ Small delay to avoid Zoho rate limits
+            await new Promise((res) => setTimeout(res, 300));
+            synced++;
+          } catch (error: any) {
+            this.logger.error(`Failed to sync ${item.item_id}: ${error.message}`);
+            failed++;
           }
         }
 
@@ -72,9 +53,11 @@ export class ProductsService {
         page++;
       }
 
-      console.log('Zoho product sync completed');
-    } catch (error) {
-      console.error('Zoho product sync failed:', error);
+      this.logger.log(
+        `✅ Daily sync completed — synced: ${synced}, failed: ${failed}`,
+      );
+    } catch (error: any) {
+      this.logger.error(`Daily sync failed: ${error.message}`);
     }
   }
 
@@ -82,9 +65,7 @@ export class ProductsService {
   async getActiveProducts() {
     return this.productModel
       .find({ is_active: true, show_in_storefront: true })
-      .select(
-        'name price sku stock description image_url category_name',
-      )
+      .select('name price sku stock description image_url category_name')
       .lean();
   }
 
@@ -128,14 +109,7 @@ export class ProductsService {
 
   // 🔹 Filtered products
   async getFilteredProducts(query: any) {
-    let {
-      page = 1,
-      limit = 20,
-      category,
-      minPrice,
-      maxPrice,
-      search,
-    } = query;
+    let { page = 1, limit = 20, category, minPrice, maxPrice, search } = query;
 
     page = Number(page);
     limit = Math.min(Number(limit), 50);
@@ -145,26 +119,20 @@ export class ProductsService {
       show_in_storefront: true,
     };
 
-    // ✅ Category filter
     if (category) {
       filter.$and = [
         {
-          $or: [
-            { category_id: category },
-            { category_name: category },
-          ],
+          $or: [{ category_id: category }, { category_name: category }],
         },
       ];
     }
 
-    // ✅ Price filter
     if (minPrice || maxPrice) {
       filter.price = {};
       if (minPrice) filter.price.$gte = Number(minPrice);
       if (maxPrice) filter.price.$lte = Number(maxPrice);
     }
 
-    // ✅ Search
     if (search) {
       filter.name = { $regex: search, $options: 'i' };
     }

@@ -3,7 +3,7 @@ import Redis from 'ioredis';
 
 @Injectable()
 export class RedisService implements OnModuleInit {
-  private client: Redis | null = null;
+  public client: Redis;
   private isConnected = false;
 
   onModuleInit() {
@@ -13,6 +13,7 @@ export class RedisService implements OnModuleInit {
         port: 6379,
         lazyConnect: true, // ✅ prevents immediate crash
         maxRetriesPerRequest: 1,
+        password: process.env.REDIS_PASSWORD,
       });
 
       this.client.connect().catch(() => {
@@ -31,7 +32,6 @@ export class RedisService implements OnModuleInit {
 
     } catch (err) {
       console.warn('⚠️ Redis disabled');
-      this.client = null;
     }
   }
 

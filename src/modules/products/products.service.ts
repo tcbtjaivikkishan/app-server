@@ -25,8 +25,10 @@ export class ProductsService {
 
       while (hasMore) {
         // ✅ Fetch from Zoho via service (NO direct API call here)
-        const response =
-          await this.zohoInventoryService.getItems(page, perPage);
+        const response = await this.zohoInventoryService.getItems(
+          page,
+          perPage,
+        );
 
         const items = response.items || [];
 
@@ -61,10 +63,7 @@ export class ProductsService {
               { upsert: true },
             );
           } catch (error) {
-            console.error(
-              `Failed to upsert product ${item.item_id}:`,
-              error,
-            );
+            console.error(`Failed to upsert product ${item.item_id}:`, error);
           }
         }
 
@@ -82,9 +81,7 @@ export class ProductsService {
   async getActiveProducts() {
     return this.productModel
       .find({ is_active: true, show_in_storefront: true })
-      .select(
-        'name price sku stock description image_url category_name',
-      )
+      .select('name price sku stock description image_url category_name')
       .lean();
   }
 
@@ -128,14 +125,7 @@ export class ProductsService {
 
   // 🔹 Filtered products
   async getFilteredProducts(query: any) {
-    let {
-      page = 1,
-      limit = 20,
-      category,
-      minPrice,
-      maxPrice,
-      search,
-    } = query;
+    let { page = 1, limit = 20, category, minPrice, maxPrice, search } = query;
 
     page = Number(page);
     limit = Math.min(Number(limit), 50);
@@ -149,10 +139,7 @@ export class ProductsService {
     if (category) {
       filter.$and = [
         {
-          $or: [
-            { category_id: category },
-            { category_name: category },
-          ],
+          $or: [{ category_id: category }, { category_name: category }],
         },
       ];
     }

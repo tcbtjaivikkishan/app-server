@@ -3,7 +3,6 @@ import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { User } from './schemas/user.schema';
-import { v4 as uuidv4 } from 'uuid';
 import { CrmService } from '../../zoho/crm/crm.service';
 
 @Injectable()
@@ -13,15 +12,6 @@ export class UsersService {
     private userModel: Model<User>,
     private crmService: CrmService,
   ) {}
-
-  // 🔹 Create Guest
-  async createGuest() {
-    return this.userModel.create({
-      mobile_number: `guest_${Date.now()}`,
-      is_guest: true,
-      guest_session_id: uuidv4(),
-    });
-  }
 
   // 🔹 Find by mobile
   async findByMobile(mobile: string) {
@@ -40,7 +30,6 @@ export class UsersService {
     if (!user) {
       user = await this.userModel.create({
         mobile_number: mobile,
-        is_guest: false,
       });
     }
 
@@ -71,18 +60,6 @@ export class UsersService {
     }
 
     return user;
-  }
-
-  // 🔹 Convert guest → registered
-  async convertGuestToUser(userId: string, data: any) {
-    return this.userModel.findByIdAndUpdate(
-      userId,
-      {
-        ...data,
-        is_guest: false,
-      },
-      { new: true },
-    );
   }
 
   // 🔹 Add address

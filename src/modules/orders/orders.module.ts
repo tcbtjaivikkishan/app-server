@@ -5,11 +5,13 @@ import { Order, OrderSchema } from './schemas/order.schema';
 import { PaymentsController } from '../../integrations/payments/payments.controller';
 import { PaymentsModule } from '../../integrations/payments/payments.module';
 import { OrdersController } from './orders.controller';
+import { CartModule } from '../cart/cart.module';
 
 @Module({
   imports: [
     MongooseModule.forFeature([{ name: Order.name, schema: OrderSchema }]),
     PaymentsModule,
+    CartModule,
   ],
   controllers: [OrdersController, PaymentsController],
   providers: [OrdersService],

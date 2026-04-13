@@ -1,87 +1,195 @@
-import { Injectable } from '@nestjs/common';
-import { RedisService } from '../../common/redis/redis.service';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
-import { Product, ProductDocument } from '../products/schemas/product.schema';
+import { Model, Types } from 'mongoose';
+import { Product } from '../products/schemas/product.schema';
+import { Cart } from './schemas/cart.schema';
 
 @Injectable()
 export class CartService {
   constructor(
-    @InjectModel(Product.name)
-    private productModel: Model<ProductDocument>,
-    private redis: RedisService
+    @InjectModel(Cart.name) private cartModel: Model<Cart>,
+    @InjectModel(Product.name) private productModel: Model<Product>,
   ) { }
 
-  private getKey(userId: string) {
-    return `cart:${userId}`;
-  }
-
-  async getCart(userId: string) {
-    return (await this.redis.get(this.getKey(userId))) || { items: [] };
-  }
-
-  async addToCart(userId: string, item: any) {
-    const key = this.getKey(userId);
-
-
-    const product = await this.productModel.findById(item.productId);
-
-    if (!product) {
-      throw new Error('Product not found');
+  async getOrCreateForGuest(guestSessionId: string) {
+    if (!guestSessionId) {
+      throw new BadRequestException('guest_session_id required');
     }
 
-    const cart = await this.getCart(userId);
+    return (
+      (await this.cartModel.findOne({ guest_session_id: guestSessionId })) ??
+      (await this.cartModel.create({
+        guest_session_id: guestSessionId,
+        items: [],
+      }))
+    );
+  }
 
-    const existingItem = cart.items.find(
-      (i) => i.productId === item.productId,
+  async getOrCreateForUser(userId: string) {
+    if (!Types.ObjectId.isValid(userId)) {
+      throw new BadRequestException('Invalid user ID');
+    }
+
+    const uid = new Types.ObjectId(userId);
+
+    return (
+      (await this.cartModel.findOne({ user_id: uid })) ??
+      (await this.cartModel.create({ user_id: uid, items: [] }))
+    );
+  }
+
+  async upsertItemForGuest(
+    guestSessionId: string,
+    productId: string,
+    quantity: number,
+  ) {
+    const cart = await this.getOrCreateForGuest(guestSessionId);
+    return this.upsertItem(cart, productId, quantity);
+  }
+
+  async upsertItemForUser(
+    userId: string,
+    productId: string,
+    quantity: number,
+  ) {
+    const cart = await this.getOrCreateForUser(userId);
+    return this.upsertItem(cart, productId, quantity);
+  }
+
+  private async upsertItem(cart: Cart, productId: string, quantity: number) {
+    // ✅ Validate productId
+    if (!Types.ObjectId.isValid(productId)) {
+      throw new BadRequestException('Invalid product ID');
+    }
+
+    // ✅ Validate quantity
+    if (!Number.isInteger(quantity) || quantity < 0) {
+      throw new BadRequestException('Invalid quantity');
+    }
+
+    const pid = new Types.ObjectId(productId);
+
+    const product = await this.productModel.findById(pid).lean();
+
+    if (!product || !product.is_active || !product.show_in_storefront) {
+      throw new BadRequestException('Invalid product');
+    }
+
+    if (product.track_inventory && (product.stock ?? 0) <= 0) {
+      throw new BadRequestException('Out of stock');
+    }
+
+    if (product.track_inventory && quantity > (product.stock ?? 0)) {
+      throw new BadRequestException('Insufficient stock');
+    }
+
+    const idx = cart.items.findIndex(
+      (i) => i.product_id.toString() === pid.toString(),
     );
 
-    if (existingItem) {
-      existingItem.quantity += item.quantity;
+    if (quantity === 0) {
+      if (idx >= 0) cart.items.splice(idx, 1);
+    } else if (idx >= 0) {
+      cart.items[idx].quantity = quantity;
     } else {
       cart.items.push({
-        productId: product._id,
-        name: product.name,
-        price: product.price,
-        image: product.image_url,
-        quantity: item.quantity,
-      });
+        product_id: pid,
+        quantity,
+      } as any);
     }
 
-    await this.redis.set(key, cart, 604800);
-
-    return cart;
+    await cart.save();
+    return this.getCartSummary(cart);
   }
 
-  async updateQuantity(userId: string, productId: string, quantity: number) {
-    const key = this.getKey(userId);
-    const cart = await this.getCart(userId);
+  async getCartSummaryByGuest(guestSessionId: string) {
+    const cart = await this.getOrCreateForGuest(guestSessionId);
+    return this.getCartSummary(cart);
+  }
 
-    cart.items = cart.items.map((item) =>
-      item.productId === productId
-        ? { ...item, quantity }
-        : item,
+  async getCartSummaryByUser(userId: string) {
+    const cart = await this.getOrCreateForUser(userId);
+    return this.getCartSummary(cart);
+  }
+
+  async getCartSummary(cart: Cart) {
+    const items = cart.items ?? [];
+
+    if (!items.length) {
+      return { cart_id: cart._id, items: [], total_amount: 0 };
+    }
+
+    const productIds = items.map((i) => i.product_id);
+
+    const products = await this.productModel
+      .find({
+        _id: { $in: productIds },
+        is_active: true,
+        show_in_storefront: true,
+      })
+      .select(
+        'name price stock track_inventory image_url is_active show_in_storefront',
+      )
+      .lean();
+
+    const byId = new Map(products.map((p: any) => [p._id.toString(), p]));
+
+    const detailed = items.map((i) => {
+      const p = byId.get(i.product_id.toString());
+      const price = p?.price ?? 0;
+
+      return {
+        product_id: i.product_id,
+        quantity: i.quantity,
+        name: p?.name,
+        price,
+        line_total: price * i.quantity,
+        image_url: p?.image_url,
+      };
+    });
+
+    const total_amount = detailed.reduce(
+      (sum, it) => sum + (it.line_total ?? 0),
+      0,
     );
 
-    await this.redis.set(key, cart, 604800);
-
-    return cart;
+    return {
+      cart_id: cart._id,
+      items: detailed,
+      total_amount,
+    };
   }
 
-  async removeItem(userId: string, productId: string) {
-    const key = this.getKey(userId);
-    const cart = await this.getCart(userId);
+  async mergeGuestIntoUser(guestSessionId: string, userId: string) {
+    const guestCart = await this.cartModel.findOne({
+      guest_session_id: guestSessionId,
+    });
 
-    cart.items = cart.items.filter(
-      (item) => item.productId !== productId,
-    );
+    // ✅ Safe check
+    if (!guestCart || !guestCart.items?.length) return;
 
-    await this.redis.set(key, cart, 604800);
+    const userCart = await this.getOrCreateForUser(userId);
 
-    return cart;
-  }
+    const qtyByProduct = new Map<string, number>();
 
-  async clearCart(userId: string) {
-    return this.redis.del(this.getKey(userId));
+    for (const it of userCart.items ?? []) {
+      qtyByProduct.set(it.product_id.toString(), it.quantity);
+    }
+
+    for (const it of guestCart.items ?? []) {
+      const key = it.product_id.toString();
+      qtyByProduct.set(key, (qtyByProduct.get(key) ?? 0) + it.quantity);
+    }
+
+    userCart.items = Array.from(qtyByProduct.entries()).map(
+      ([pid, quantity]) => ({
+        product_id: new Types.ObjectId(pid),
+        quantity,
+      }),
+    ) as any;
+
+    await userCart.save();
+
+    await this.cartModel.deleteOne({ _id: guestCart._id });
   }
 }

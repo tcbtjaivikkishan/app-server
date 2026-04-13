@@ -4,12 +4,14 @@ import { Order } from './schemas/order.schema';
 import { Model } from 'mongoose';
 import { v4 as uuidv4 } from 'uuid';
 import { ZohoPaymentGatewayService } from '../../integrations/payments/zoho-payment-gateway.service';
+import { CartService } from '../cart/cart.service';
 
 @Injectable()
 export class OrdersService {
   constructor(
     @InjectModel(Order.name) private orderModel: Model<Order>,
     private paymentService: ZohoPaymentGatewayService,
+    private cartService: CartService,
   ) { }
 
   async createOrder(userId: string, dto: any) {

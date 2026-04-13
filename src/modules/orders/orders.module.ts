@@ -9,7 +9,11 @@ import { CartModule } from '../cart/cart.module';
 
 @Module({
   imports: [
-    MongooseModule.forFeature([{ name: Order.name, schema: OrderSchema }]),
+    MongooseModule.forFeature([
+      { name: Order.name, schema: OrderSchema },
+      { name: User.name, schema: UserSchema },
+    ]),
+    ZohoModule,
     PaymentsModule,
     CartModule,
   ],

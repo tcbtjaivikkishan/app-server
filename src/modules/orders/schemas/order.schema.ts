@@ -5,7 +5,7 @@ export type OrderDocument = Order & Document;
 
 @Schema({ timestamps: true })
 export class Order {
-  @Prop({ required: true })
+  @Prop({ required: true, index: true })
   userId!: string;
 
   @Prop({ required: true, unique: true })
@@ -19,6 +19,10 @@ export class Order {
     quantity: number;
     weight: number;
     image?: string;
+
+    // 🔥 IMPORTANT (for Zoho Inventory mapping)
+    sku?: string;
+    zohoItemId?: string;
   }[];
 
   @Prop({ required: true })
@@ -32,7 +36,7 @@ export class Order {
 
   // 📦 ORDER STATUS
   @Prop({
-    enum: ['created', 'confirmed', 'shipped', 'delivered', 'cancelled'],
+    enum: ['created', 'confirmed', 'processing', 'shipped', 'delivered', 'cancelled'],
     default: 'created',
   })
   orderStatus!: string;
@@ -61,9 +65,22 @@ export class Order {
   @Prop()
   paymentId?: string;
 
-  // 📦 Future (Zoho Inventory)
+  // 🔥 Zoho Inventory Fields
   @Prop()
   zohoSalesOrderId?: string;
+
+  @Prop({ default: false })
+  isSyncedToZoho?: boolean;
+
+  @Prop()
+  zohoSyncError?: string;
+
+  // 📦 Shipment (future)
+  @Prop()
+  shipmentId?: string;
+
+  @Prop()
+  trackingId?: string;
 }
 
 export const OrderSchema = SchemaFactory.createForClass(Order);

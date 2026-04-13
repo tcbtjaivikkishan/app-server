@@ -16,7 +16,7 @@ import { PassportModule } from '@nestjs/passport';
     PassportModule.register({ defaultStrategy: 'jwt' }), // 🔥 ADD THIS
 
     JwtModule.register({
-      secret: 'SUPER_SECRET_KEY',
+      secret: 'JWT_ACCESS_SECRET',
       signOptions: { expiresIn: '7d' },
     }),
   ],

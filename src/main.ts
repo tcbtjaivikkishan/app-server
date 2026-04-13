@@ -1,33 +1,39 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { ValidationPipe } from '@nestjs/common';
-import * as compression from 'compression';
 import helmet from 'helmet';
+import * as bodyParser from 'body-parser';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create(AppModule, {
+    bodyParser: false, // ✅ Disable default parser (IMPORTANT)
+  });
 
-  // 🔐 Security headers
+  // 🔐 Security
   app.use(helmet());
 
-  // ⚡ Compression (faster responses)
-  // app.use(compression());
-
-  // ✅ Global Validation (VERY IMPORTANT)
+  // ✅ Validation
   app.useGlobalPipes(
     new ValidationPipe({
-      whitelist: true,        // remove extra fields
-      forbidNonWhitelisted: true, // throw error on unknown fields
-      transform: true,        // auto transform DTO types
+      whitelist: true,
+      forbidNonWhitelisted: true,
+      transform: true,
     }),
   );
 
-  // 🌍 Enable CORS (frontend connection)
+  // 🌍 CORS
   app.enableCors({
-    origin: '*', // later restrict to your domain
+    origin: '*', // restrict later
     credentials: true,
   });
 
-  await app.listen(process.env.PORT ?? 3000);
+  // 🔥 CRITICAL: RAW BODY for Zoho webhook ONLY
+  app.use('/payments/webhook', bodyParser.raw({ type: '*/*' }));
+
+  // ✅ Normal JSON parser for all other routes
+  app.use(bodyParser.json());
+
+  await app.listen(3000);
 }
+
 bootstrap();

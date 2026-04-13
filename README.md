@@ -152,7 +152,8 @@ src/
 │   │    ├── controllers/
 │   │    ├── services/
 │   │    │    ├── orders.service.ts
-│   │    │    ├── order-processing.service.ts
+│   │    │    ├── orders.module.ts
+│   │    │    └── orders.controller.ts
 │   │    ├── schemas/
 │   │    ├── dto/
 │   │    └── orders.module.ts
@@ -162,51 +163,40 @@ src/
 │   │    ├── schemas/
 │   │    └── commissions.module.ts
 │   │
-│   ├── referrals/
-│   │    ├── services/
-│   │    └── referrals.module.ts
+│   └── referrals/
+│        ├── services/
+│        └── referrals.module.ts
 │
-├── integrations/              # 🔌 EXTERNAL SERVICES (VERY IMPORTANT)
-│
-│   ├── zoho/
-│   │    ├── core/
-│   │    │    ├── zoho-auth.service.ts
-│   │    │    ├── zoho-http.service.ts
-│   │    │
+├── zoho/
+│    ├── core/
+│    │    ├── zoho-auth.service.ts
+│    │    ├── zoho-http.service.ts
+│    │
 │   │    ├── crm/
 │   │    │    └── zoho-crm.service.ts
-│   │    │
 │   │    ├── inventory/
 │   │    │    └── zoho-inventory.service.ts
-│   │    │
-│   │    ├── schemas/
-│   │    ├── dto/
-│   │    └── zoho.module.ts
+│   │    ├── payments/
+│   │    │    ├── zoho-payments.module.ts
+│   │    │    └── zoho-payments.service.ts
+│    ├── schemas/
+│    └── zoho.module.ts
+|
+├── integrations/              # 🔌 EXTERNAL SERVICES (VERY IMPORTANT)
 │   │
-│   ├── aws/
+│   ├── zoho-image-sync/
 │   │    ├── s3.service.ts
 │   │    └── aws.module.ts
 │   │
+│   ├── shipment/
+│   │    ├── shipment.service.ts
+│   │    └── shipment.module.ts
+│   │
 │   └── payments/
 │        ├── zoho-payment-gateway.service.ts
+│        ├── payment.controller.ts
 │        └── payments.module.ts
-│
-├── jobs/                      # 🧠 BACKGROUND WORKERS (CRON / QUEUES)
-│   ├── cron/
-│   │    ├── product-sync.job.ts      # Zoho sync
-│   │    └── commission.job.ts
-│   │
-│   ├── queues/                # (future BullMQ)
-│   └── jobs.module.ts
-│
-├── cache/                     # Redis layer
-│   ├── redis.module.ts
-│   └── cache.service.ts
-│
-├── events/                    # Event-driven architecture (advanced)
-│   ├── events.module.ts
-│   └── handlers/
-│
+|
 └── shared/                    # reusable domain logic (optional)
 ```
 

@@ -17,6 +17,7 @@ import { WishlistModule } from './modules/wishlist/wishlist.module';
 import { ShipmentModule } from './integrations/shipment/shipment.module';
 import delhiveryConfig from './integrations/shipment/delhivery.config';
 import { ZohoImageSyncModule } from './integrations/zoho-image-sync/zoho-image-sync.module';
+import { ZohoPaymentsModule } from './zoho/payments/payments.module';
 
 @Module({
   imports: [
@@ -28,6 +29,7 @@ import { ZohoImageSyncModule } from './integrations/zoho-image-sync/zoho-image-s
       }),
     }),
     ZohoModule,
+    ZohoPaymentsModule,
     ProductsModule,
     ScheduleModule.forRoot(),
     OrdersModule,

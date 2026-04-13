@@ -83,7 +83,7 @@ export class ZohoImageSyncService {
   async syncItemImage(itemId: string): Promise<void> {
     this.logger.log(`🔄 Syncing item: ${itemId}`);
 
-    const orgId = this.configService.getOrThrow('ZOHO_ORG');
+    const orgId = this.configService.getOrThrow('ZOHO_ORG_ID');
 
     // Step 1: Fetch full item from Zoho
     const data = await this.withRetry(

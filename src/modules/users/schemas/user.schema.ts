@@ -47,15 +47,6 @@ export class User extends Document {
   @Prop({ required: true, unique: true })
   mobile_number!: string;
 
-  @Prop({ default: false })
-  is_guest!: boolean;
-
-  @Prop()
-  guest_session_id?: string;
-
-  @Prop()
-  password_hash?: string;
-
   @Prop()
   name?: string;
 

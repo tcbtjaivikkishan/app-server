@@ -1,25 +1,34 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Order } from './schemas/order.schema';
 import { Model } from 'mongoose';
 import { v4 as uuidv4 } from 'uuid';
 import { ZohoPaymentGatewayService } from '../../integrations/payments/zoho-payment-gateway.service';
+import { User } from '../users/schemas/user.schema';
+import { ZohoInventoryService } from '../../zoho/inventory/inventory.service';
+import { CartService } from '../cart/cart.service';
+import { Product } from '../products/schemas/product.schema';
+import { ShippingService } from '../../integrations/shipping/shipping.service';
 
 @Injectable()
 export class OrdersService {
   constructor(
+    private zohoInventoryService: ZohoInventoryService,
     @InjectModel(Order.name) private orderModel: Model<Order>,
+    @InjectModel(Product.name) private productModel: Model<Product>,
+    @InjectModel(User.name) private userModel: Model<User>,
+    private cartService: CartService,
     private paymentService: ZohoPaymentGatewayService,
+    private shippingService: ShippingService,
   ) { }
 
   async createOrder(userId: string, dto: any) {
-    const { items, address, user } = dto;
+    const { items, address } = dto;
 
-    // ✅ 1. Calculate totals (DO NOT TRUST FRONTEND)
     let totalAmount = 0;
     let totalWeight = 0;
 
-    const processedItems = items.map((item) => {
+    const processedItems = items.map((item: any) => {
       totalAmount += item.price * item.quantity;
       totalWeight += item.weight * item.quantity;
 
@@ -33,11 +42,17 @@ export class OrdersService {
       };
     });
 
-    // 🚚 2. Shipping
-    const shippingCharge = this.calculateShippingStub(totalWeight);
+    const type_of_package = totalWeight < 20 ? 'SPS' : 'B2B';
+
+    const shipping = await this.shippingService.calculateRate(
+      totalWeight,
+      Number(address.pincode),
+      type_of_package,
+    );
+
+    const shippingCharge = shipping.shippingCharge;
     const finalAmount = totalAmount + shippingCharge;
 
-    // 🆔 3. Create Order
     const order = await this.orderModel.create({
       userId,
       orderId: `ORD-${uuidv4()}`,
@@ -50,17 +65,11 @@ export class OrdersService {
       paymentStatus: 'pending',
     });
 
-    // 💳 4. Create Payment Session
-    const payment = await this.paymentService.createPaymentSession({
-      orderId: order.orderId,
-      amount: finalAmount,
-      customerName: user?.name,
-      email: user?.email,
-      mobile: user?.mobile,
-    });
+    const payment = await this.paymentService.createPaymentSession(order);
 
-    // 🧠 5. Save payment session
-    order.paymentSessionId = payment?.hostedpage?.url; await order.save();
+
+    order.paymentSessionId = payment?.payments_session_id;
+    await order.save();
 
     return {
       orderId: order.orderId,
@@ -68,32 +77,153 @@ export class OrdersService {
     };
   }
 
-  // 🔔 PAYMENT SUCCESS (Webhook)
-  async handlePaymentSuccess(
-    orderId: string,
-    paymentId: string,
-    amount: number,
-  ) {
+  async createOrderFromCart(userId: string, address: any) {
+    const cart = await this.cartService.getCartSummaryByUser(userId);
+
+    if (!cart || cart.items.length === 0) {
+      throw new Error('Cart is empty');
+    }
+
+    const items = await Promise.all(
+      cart.items.map(async (item: any) => {
+        const product = await this.productModel.findById(item.product_id);
+
+        if (!product) {
+          throw new Error(`Product not found: ${item.product_id}`);
+        }
+
+        return {
+          productId: product._id,
+          name: product.name,
+          price: product.price,
+          quantity: item.quantity,
+          weight: product.weight || 1,
+          image: product.image_url,
+          zohoItemId: product.zoho_item_id,
+        };
+      }),
+    );
+
+    const order = await this.createOrder(userId, {
+      items,
+      address,
+    });
+
+
+    await this.cartService.mergeGuestIntoUser('', userId);
+    await this.cartService.getOrCreateForUser(userId).then(c => {
+      c.items = [];
+      return c.save();
+    });
+
+    return order;
+  }
+
+  async getOrders(userId: string, page: number, limit: number) {
+    const skip = (page - 1) * limit;
+
+    const [orders, total] = await Promise.all([
+      this.orderModel
+        .find({ userId })
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit),
+
+      this.orderModel.countDocuments({ userId }),
+    ]);
+
+    return {
+      data: orders,
+      total,
+      page,
+      totalPages: Math.ceil(total / limit),
+    };
+  }
+
+  async getOrderById(userId: string, orderId: string) {
+    const order = await this.orderModel.findOne({
+      userId,
+      orderId,
+    });
+
+    if (!order) {
+      throw new Error('Order not found');
+    }
+
+    return order;
+  }
+
+  async cancelOrder(userId: string, orderId: string) {
+    const order = await this.orderModel.findOne({
+      userId,
+      orderId,
+    });
+
+    if (!order) {
+      throw new NotFoundException('Order not found');
+    }
+
+    if (order.orderStatus === 'cancelled') {
+      throw new BadRequestException('Order already cancelled');
+    }
+
+    if (order.orderStatus === 'confirmed') {
+      throw new BadRequestException('Cannot cancel confirmed order');
+    }
+
+    order.orderStatus = 'cancelled';
+    await order.save();
+
+    return { message: 'Order cancelled successfully' };
+  }
+
+  async handlePaymentSuccess(orderId: string, paymentId: string, amount: number) {
     const order = await this.orderModel.findOne({ orderId });
 
     if (!order) throw new Error('Order not found');
 
-    // 🔐 Idempotency
     if (order.paymentStatus === 'paid') return;
 
-    // 🔒 Verify amount
-    if (order.finalAmount !== amount) {
+    if (Math.abs(order.finalAmount - Number(amount)) > 0.01) {
       throw new Error('Amount mismatch');
     }
+
 
     order.paymentStatus = 'paid';
     order.orderStatus = 'confirmed';
     order.paymentId = paymentId;
 
     await order.save();
+
+
+    const user = await this.userModel.findById(order.userId);
+
+    if (!user?.zoho_contact_id) {
+      order.zohoSyncError = 'Missing zoho_contact_id';
+      await order.save();
+      return;
+    }
+
+
+    try {
+      const zohoOrderId = await this.zohoInventoryService.createSalesOrder(
+        order,
+        user.zoho_contact_id,
+      );
+
+      order.zohoSalesOrderId = zohoOrderId;
+      order.isSyncedToZoho = true;
+      order.orderStatus = 'processing';
+
+      await order.save();
+    } catch (error: any) {
+      console.error('Zoho Sync Failed:', error);
+
+      order.zohoSyncError = error.message;
+      await order.save();
+    }
   }
 
-  // ❌ PAYMENT FAILURE
   async handlePaymentFailure(orderId: string) {
     const order = await this.orderModel.findOne({ orderId });
 
@@ -103,12 +233,5 @@ export class OrdersService {
 
     order.paymentStatus = 'failed';
     await order.save();
-  }
-
-  // 🚚 SHIPPING STUB
-  private calculateShippingStub(weight: number): number {
-    if (weight < 5) return 50;
-    if (weight < 20) return 120;
-    return 300;
   }
 }

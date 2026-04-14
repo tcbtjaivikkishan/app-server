@@ -54,3 +54,12 @@ pids
 
 # Diagnostic reports (https://nodejs.org/api/report.html)
 report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
+
+
+https://accounts.zoho.in/oauth/v2/auth?
+scope=ZohoPay.payments.CREATE,ZohoPay.payments.READ,ZohoPay.payments.UPDATE&
+client_id=1005.M45CO4MEAY9VNVTA13KPUKZTTC4BHZ&
+response_type=code&
+access_type=offline&
+redirect_uri=http://localhost:3000/callback&
+state=payments

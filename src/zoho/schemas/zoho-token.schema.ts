@@ -2,7 +2,7 @@ import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 
 @Schema({ timestamps: true })
 export class ZohoToken {
-  @Prop({ required: true, unique: true }) // ✅ important
+  @Prop({ required: true, unique: true })
   service!: string;
 
   @Prop({ required: true })

@@ -19,11 +19,6 @@
 11. [Database Design](#11-database-design)
 12. [Performance Optimisations](#12-performance-optimisations)
 13. [Environment Variables](#13-environment-variables)
-14. [Infrastructure & Cost](#14-infrastructure--cost)
-15. [Project Status](#15-project-status)
-16. [Known Issues & Fixes](#16-known-issues--fixes)
-17. [Deployment Guide](#17-deployment-guide)
-18. [Future Roadmap](#18-future-roadmap)
 
 ---
 
@@ -152,7 +147,8 @@ src/
 │   │    ├── controllers/
 │   │    ├── services/
 │   │    │    ├── orders.service.ts
-│   │    │    ├── order-processing.service.ts
+│   │    │    ├── orders.module.ts
+│   │    │    └── orders.controller.ts
 │   │    ├── schemas/
 │   │    ├── dto/
 │   │    └── orders.module.ts
@@ -162,51 +158,40 @@ src/
 │   │    ├── schemas/
 │   │    └── commissions.module.ts
 │   │
-│   ├── referrals/
-│   │    ├── services/
-│   │    └── referrals.module.ts
+│   └── referrals/
+│        ├── services/
+│        └── referrals.module.ts
 │
-├── integrations/              # 🔌 EXTERNAL SERVICES (VERY IMPORTANT)
-│
-│   ├── zoho/
-│   │    ├── core/
-│   │    │    ├── zoho-auth.service.ts
-│   │    │    ├── zoho-http.service.ts
-│   │    │
+├── zoho/
+│    ├── core/
+│    │    ├── zoho-auth.service.ts
+│    │    ├── zoho-http.service.ts
+│    │
 │   │    ├── crm/
 │   │    │    └── zoho-crm.service.ts
-│   │    │
 │   │    ├── inventory/
 │   │    │    └── zoho-inventory.service.ts
-│   │    │
-│   │    ├── schemas/
-│   │    ├── dto/
-│   │    └── zoho.module.ts
+│   │    ├── payments/
+│   │    │    ├── zoho-payments.module.ts
+│   │    │    └── zoho-payments.service.ts
+│    ├── schemas/
+│    └── zoho.module.ts
+|
+├── integrations/              # 🔌 EXTERNAL SERVICES (VERY IMPORTANT)
 │   │
-│   ├── aws/
+│   ├── zoho-image-sync/
 │   │    ├── s3.service.ts
 │   │    └── aws.module.ts
 │   │
+│   ├── shipment/
+│   │    ├── shipment.service.ts
+│   │    └── shipment.module.ts
+│   │
 │   └── payments/
 │        ├── zoho-payment-gateway.service.ts
+│        ├── payment.controller.ts
 │        └── payments.module.ts
-│
-├── jobs/                      # 🧠 BACKGROUND WORKERS (CRON / QUEUES)
-│   ├── cron/
-│   │    ├── product-sync.job.ts      # Zoho sync
-│   │    └── commission.job.ts
-│   │
-│   ├── queues/                # (future BullMQ)
-│   └── jobs.module.ts
-│
-├── cache/                     # Redis layer
-│   ├── redis.module.ts
-│   └── cache.service.ts
-│
-├── events/                    # Event-driven architecture (advanced)
-│   ├── events.module.ts
-│   └── handlers/
-│
+|
 └── shared/                    # reusable domain logic (optional)
 ```
 
@@ -404,7 +389,6 @@ JWT issued  →  User authenticated
   "_id":            "ObjectId",
   "mobile_number":  "+91XXXXXXXXXX",
   "role":           "customer | farmer | salesperson",
-  "is_guest":       false,
   "referralCode":   "string",
   "zoho_contact_id":"set after first order only",
   "otp": {
@@ -582,145 +566,8 @@ AWS_SECRET_ACCESS_KEY=
 ```
 
 ---
-
-## 14. Infrastructure & Cost
-
-| Component | Monthly Cost |
-|---|---|
-| EC2 t2.micro (free tier) | $0 |
-| MongoDB Atlas M0 (free tier) | $0 |
-| Amazon S3 (image storage) | ~$0.10 |
-| Domain | ~$1 |
-| **Total** | **~$1/month (~₹80)** |
-
-### Scaling Roadmap
-
-| Phase | Changes |
-|---|---|
-| Phase 1 *(current)* | Single EC2 + MongoDB free tier + monolith |
-| Phase 2 | Upgrade to t3.small (2 GB RAM), paid MongoDB tier |
-| Phase 3 | Load balancer + CloudFront CDN + BullMQ job queue |
-| Phase 4 | Microservices split as traffic demands |
-
----
-
-## 15. Project Status
-
-| Feature | Status |
-|---|---|
-| Zoho OAuth (token exchange + auto-refresh) | ✅ Complete |
-| Zoho CRM — Contact upsert | ✅ Complete |
-| Zoho Inventory — Product fetch | ✅ Complete |
-| Product cron sync (every 30 min) | ✅ Complete |
-| MongoDB product schema + indexes | ✅ Complete |
-| Product API (filter, search, paginate, sort) | ✅ Complete |
-| OTP Authentication | ✅ Complete |
-| JWT Auth | ✅ Complete |
-| User schema (roles, referral, addresses) | ✅ Complete |
-| Category system | 🔄 In Progress |
-| Inventory sync improvements | 🔄 In Progress |
-| Orders module | ⏳ Upcoming |
-| Zoho CRM Deals (Order → Deal) | ⏳ Upcoming |
-| Payment integration (Razorpay) | ⏳ Upcoming |
-| AWS S3 image handling | ⏳ Upcoming |
-| Redis caching | ⏳ Upcoming |
-| BullMQ background jobs | ⏳ Upcoming |
-| Invoices via Zoho Books | ⏳ Upcoming |
-
----
-
-## 16. Known Issues & Fixes
-
-| Issue | Fix Applied |
-|---|---|
-| `OAUTH_SCOPE_MISMATCH` | Added both CRM + Inventory scopes to auth URL |
-| `invalid_code` error | Auth code is one-time use; fixed OAuth redirect handling |
-| Token overwrite bug | `.env` token is initial only; DB is source of truth after first run |
-| `ZOHO_ORGANIZATION_ID` env mismatch | Renamed to `ZOHO_ORG_ID` consistently |
-| Invalid org ID (was `"60"`) | Correct numeric org ID used from Zoho dashboard |
-| Duplicate index warning | Removed redundant `zoho_item_id` index (already `unique` in schema) |
-| Route conflict on `GET :id` | Changed to `GET id/:id` to avoid catching other routes |
-| String → Number filter bug | `minPrice`/`maxPrice` parsed with `Number()` before querying |
-| Category filter mismatch | Filter now checks both `category_id` and `category_name` |
-
----
-
-## 17. Deployment Guide
-
-### Local Development
-
-```bash
-npm install
-npm run start:dev
-```
-
-Then open the Zoho OAuth URL once in a browser to store the initial token:
-
-```
-https://accounts.zoho.in/oauth/v2/auth?scope=ZohoCRM.modules.ALL,ZohoInventory.fullaccess.all&client_id=YOUR_CLIENT_ID&response_type=code&access_type=offline&redirect_uri=http://localhost:3000/callback
-```
-
-### Production (AWS EC2 — Ubuntu)
-
-```bash
-# 1. Launch EC2 (Ubuntu 22.04), open ports 80 and 443
-
-# 2. Install dependencies
-sudo apt update
-sudo apt install -y nodejs npm nginx redis-server
-npm install -g pm2
-
-# 3. Clone and install
-git clone <your-repo>
-cd <project>
-npm install
-npm run build
-
-# 4. Set environment variables
-cp .env.example .env
-# Fill in all values in .env
-
-# 5. Start with PM2
-pm2 start dist/main.js --name ecommerce-backend
-pm2 save && pm2 startup
-
-# 6. Configure Nginx reverse proxy
-# Proxy localhost:3000 → port 80/443
-
-# 7. Enable HTTPS
-sudo apt install certbot python3-certbot-nginx
-sudo certbot --nginx -d yourdomain.com
-```
-
----
-
-## 18. Future Roadmap
-
-```
-Users → Orders → Zoho CRM Deals → Analytics → Marketing Automation
-                       ↓
-                Zoho Books (Invoices)
-                       ↓
-            Payment Gateway (Razorpay)
-```
-
-- Zoho Sales Orders created automatically on order placement
-- CRM Deals pipeline for sales tracking
-- Zoho Books for invoice generation
-- SalesIQ for live chat support
-- Webhook-based real-time sync from Zoho → backend
-- Product variants, ratings & reviews
-- Multi-organization support
-- Admin analytics dashboard
-
----
-
 ## 👨‍💻 Author
 
 **TCBT JAIVIK KISHAN PVT. LTD.**
 
 ---
-
-## 📜 License
-
-MIT License

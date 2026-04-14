@@ -6,26 +6,25 @@ import {
   InternalServerErrorException,
 } from '@nestjs/common';
 import { ZohoAuthService } from './core/zoho-auth.service';
+import { ZohoPaymentsService } from './payments/payments.service';
 import type { ZohoService } from './config/zoho-scope.config';
 
 @Controller('callback')
 export class CallbackController {
-  constructor(private readonly zohoAuthService: ZohoAuthService) {}
+  constructor(
+    private readonly zohoAuthService: ZohoAuthService,
+    private readonly zohoPaymentsService: ZohoPaymentsService,
+  ) { }
 
   @Get()
   async handleCallback(
     @Query('code') code?: string,
-    @Query('state') service?: ZohoService,
+    @Query('state') service?: ZohoService
   ) {
-    // 🔍 Debug log (remove in production if needed)
-    console.log('Zoho Callback:', { code, service });
-
-    // ✅ Validate code
     if (!code) {
       throw new BadRequestException('Authorization code missing');
     }
 
-    // ✅ Validate service
     if (!service) {
       throw new BadRequestException('Service (state) missing');
     }
@@ -37,7 +36,16 @@ export class CallbackController {
     }
 
     try {
-      // 🔥 Exchange token per service
+
+      if (service === 'payments') {
+        const data = await this.zohoPaymentsService.exchangeCodeForToken(code);
+
+        return {
+          message: 'Zoho Payments token saved successfully',
+          data,
+        };
+      }
+
       const data = await this.zohoAuthService.exchangeCodeForToken(
         code,
         service,
@@ -48,7 +56,7 @@ export class CallbackController {
         message: `Zoho token saved successfully`,
         service,
         expires_in: data.expires_in,
-        scope: data.scope, // 👈 useful for debugging
+        scope: data.scope,
       };
     } catch (error: any) {
       console.error('Zoho Callback Error:', error);

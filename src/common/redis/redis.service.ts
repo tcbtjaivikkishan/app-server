@@ -3,28 +3,36 @@ import Redis from 'ioredis';
 
 @Injectable()
 export class RedisService implements OnModuleInit, OnModuleDestroy {
-  private client: Redis | null = null;
+  public client!: Redis;
   private isConnected = false;
-  private errorLogged = false; // ✅ only log once
+  private errorLogged = false;
 
   onModuleInit() {
+    const redisUrl = process.env.REDIS_URL;
+
     try {
-      this.client = new Redis({
-        host: process.env.REDIS_HOST || '127.0.0.1',
-        port: 6379,
-        lazyConnect: true,
-        maxRetriesPerRequest: 1,
-        retryStrategy: () => null, // ✅ stop retrying — no spam
-        enableOfflineQueue: false,  // ✅ don't queue commands when offline
-      });
+      this.client = redisUrl
+        ? new Redis(redisUrl, {
+            lazyConnect: true,
+            maxRetriesPerRequest: 1,
+            retryStrategy: () => null,
+            enableOfflineQueue: false,
+          })
+        : new Redis({
+            host: '127.0.0.1',
+            port: 6379,
+            lazyConnect: true,
+            maxRetriesPerRequest: 1,
+            retryStrategy: () => null,
+            enableOfflineQueue: false,
+          });
 
       this.client.connect().catch(() => {
         if (!this.errorLogged) {
           console.warn('⚠️ Redis not available, running without cache');
           this.errorLogged = true;
         }
-        this.client?.disconnect();  // ✅ stop reconnect attempts
-        this.client = null;
+        this.client?.disconnect();
       });
 
       this.client.on('connect', () => {
@@ -43,7 +51,6 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
 
     } catch {
       console.warn('⚠️ Redis disabled');
-      this.client = null;
     }
   }
 
@@ -53,20 +60,23 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
 
   async set(key: string, value: any, ttl?: number) {
     if (!this.client || !this.isConnected) return;
+
     try {
       const data = JSON.stringify(value);
+
       if (ttl) {
         await this.client.set(key, data, 'EX', ttl);
       } else {
         await this.client.set(key, data);
       }
     } catch {
-      // silent
+      // silent fail
     }
   }
 
   async get(key: string) {
     if (!this.client || !this.isConnected) return null;
+
     try {
       const data = await this.client.get(key);
       return data ? JSON.parse(data) : null;
@@ -77,6 +87,7 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
 
   async del(key: string) {
     if (!this.client || !this.isConnected) return;
+
     try {
       return await this.client.del(key);
     } catch {

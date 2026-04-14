@@ -23,8 +23,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     });
   }
 
-  validate(payload: any) {
-    console.log('JWT PAYLOAD:', payload); // 👈 must print
-    return { userId: payload.userId };
+  validate(payload: AccessTokenPayload): AuthenticatedRequestUser {
+    return { userId: payload.sub, sessionId: payload.sid };
   }
 }

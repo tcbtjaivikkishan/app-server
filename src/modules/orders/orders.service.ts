@@ -8,6 +8,7 @@ import { User } from '../users/schemas/user.schema';
 import { ZohoInventoryService } from '../../zoho/inventory/inventory.service';
 import { CartService } from '../cart/cart.service';
 import { Product } from '../products/schemas/product.schema';
+import { ShippingService } from '../../integrations/shipping/shipping.service';
 
 @Injectable()
 export class OrdersService {
@@ -18,6 +19,7 @@ export class OrdersService {
     @InjectModel(User.name) private userModel: Model<User>,
     private cartService: CartService,
     private paymentService: ZohoPaymentGatewayService,
+    private shippingService: ShippingService,
   ) { }
 
   async createOrder(userId: string, dto: any) {
@@ -40,7 +42,15 @@ export class OrdersService {
       };
     });
 
-    const shippingCharge = this.calculateShippingStub(totalWeight);
+    const type_of_package = totalWeight < 20 ? 'SPS' : 'B2B';
+
+    const shipping = await this.shippingService.calculateRate(
+      totalWeight,
+      Number(address.pincode),
+      type_of_package,
+    );
+
+    const shippingCharge = shipping.shippingCharge;
     const finalAmount = totalAmount + shippingCharge;
 
     const order = await this.orderModel.create({
@@ -89,7 +99,7 @@ export class OrdersService {
           quantity: item.quantity,
           weight: product.weight || 1,
           image: product.image_url,
-          zohoItemId: product.zoho_item_id, // 🔥 CRITICAL
+          zohoItemId: product.zoho_item_id,
         };
       }),
     );
@@ -99,8 +109,8 @@ export class OrdersService {
       address,
     });
 
-    // 🔥 clear cart after order
-    await this.cartService.mergeGuestIntoUser('', userId); // safe no-op
+
+    await this.cartService.mergeGuestIntoUser('', userId);
     await this.cartService.getOrCreateForUser(userId).then(c => {
       c.items = [];
       return c.save();
@@ -167,25 +177,6 @@ export class OrdersService {
     return { message: 'Order cancelled successfully' };
   }
 
-  private async getUserCartStub(userId: string) {
-    return {
-      items: [
-        {
-          productId: 'p1',
-          name: 'Test Product',
-          price: 100,
-          quantity: 2,
-          weight: 1,
-          image: '',
-        },
-      ],
-      address: {
-        city: 'Bhopal',
-        pincode: '462001',
-      },
-    };
-  }
-
   async handlePaymentSuccess(orderId: string, paymentId: string, amount: number) {
     const order = await this.orderModel.findOne({ orderId });
 
@@ -242,11 +233,5 @@ export class OrdersService {
 
     order.paymentStatus = 'failed';
     await order.save();
-  }
-
-  private calculateShippingStub(weight: number): number {
-    if (weight < 5) return 50;
-    if (weight < 20) return 120;
-    return 300;
   }
 }

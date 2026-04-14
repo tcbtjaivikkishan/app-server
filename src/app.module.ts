@@ -14,14 +14,14 @@ import { CategoryModule } from './modules/categories/categories.module';
 import { RedisModule } from './common/redis/redis.module';
 import { CartModule } from './modules/cart/cart.module';
 import { WishlistModule } from './modules/wishlist/wishlist.module';
-import { ShipmentModule } from './integrations/shipment/shipment.module';
-import delhiveryConfig from './integrations/shipment/delhivery.config';
 import { ZohoImageSyncModule } from './integrations/zoho-image-sync/zoho-image-sync.module';
 import { ZohoPaymentsModule } from './zoho/payments/payments.module';
+import { ShippingModule } from './integrations/shipping/shipping.module';
+
 
 @Module({
   imports: [
-    ConfigModule.forRoot({ isGlobal: true, load: [delhiveryConfig] }),
+    ConfigModule.forRoot({ isGlobal: true}),
     MongooseModule.forRootAsync({
       inject: [ConfigService],
       useFactory: (configService: ConfigService) => ({
@@ -39,8 +39,8 @@ import { ZohoPaymentsModule } from './zoho/payments/payments.module';
     RedisModule,
     CartModule,
     WishlistModule,
-    ShipmentModule,
     ZohoImageSyncModule,
+    ShippingModule,
   ],
   controllers: [AppController, CallbackController],
   providers: [AppService],

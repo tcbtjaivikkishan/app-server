@@ -77,31 +77,48 @@ export class ZohoPaymentsService {
   }
 
   async refreshAccessToken(refreshToken: string) {
-    const response = await axios.post(
-      'https://accounts.zoho.in/oauth/v2/token',
-      null,
-      {
-        params: {
-          grant_type: 'refresh_token',
-          client_id: process.env.ZOHO_PAYMENTS_CLIENT_ID,
-          client_secret: process.env.ZOHO_PAYMENTS_CLIENT_SECRET,
-          refresh_token: refreshToken,
+    try {
+      const response = await axios.post(
+        'https://accounts.zoho.in/oauth/v2/token',
+        null,
+        {
+          params: {
+            grant_type: 'refresh_token',
+            client_id: process.env.ZOHO_PAYMENTS_CLIENT_ID,
+            client_secret: process.env.ZOHO_PAYMENTS_CLIENT_SECRET,
+            refresh_token: refreshToken,
+          },
         },
-      },
-    );
+      );
 
-    const data = response.data;
+      console.log('REFRESH RESPONSE:', response.data);
 
-    const expiresAt = Date.now() + data.expires_in * 1000;
+      const data = response.data;
 
-    await this.tokenModel.findOneAndUpdate(
-      { service: 'payments' },
-      {
-        access_token: data.access_token,
-        expires_at: expiresAt,
-      },
-    );
+      if (data.error) {
+        throw new Error(data.error);
+      }
 
-    return data.access_token;
+      const expiresAt = Date.now() + data.expires_in * 1000;
+
+      await this.tokenModel.findOneAndUpdate(
+        { service: 'payments' },
+        {
+          access_token: data.access_token,
+          expires_at: expiresAt,
+        },
+      );
+
+      return data.access_token;
+    } catch (error: unknown) {
+      const err = error as AxiosError;
+
+      console.error(
+        'Zoho Refresh Token Error:',
+        err.response?.data || err.message,
+      );
+
+      throw new Error('Failed to refresh Zoho access token');
+    }
   }
 }

@@ -4,7 +4,7 @@ import { SendOtpDto } from './dto/send-otp.dto';
 import { VerifyOtpDto } from './dto/verify-otp.dto';
 import { RefreshDto } from './dto/refresh.dto';
 
-@Controller('auth')
+@Controller('auth') 
 export class AuthController {
   constructor(private authService: AuthService) {}
   @Post('send-otp')

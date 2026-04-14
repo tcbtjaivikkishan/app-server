@@ -9,6 +9,7 @@ import { CartModule } from '../cart/cart.module';
 import { ZohoModule } from '../../zoho/zoho.module';
 import { User, UserSchema } from '../users/schemas/user.schema';
 import { Product, ProductSchema } from '../products/schemas/product.schema';
+import { ShippingModule } from '../../integrations/shipping/shipping.module';
 
 @Module({
   imports: [
@@ -20,6 +21,7 @@ import { Product, ProductSchema } from '../products/schemas/product.schema';
     ZohoModule,
     PaymentsModule,
     CartModule,
+    ShippingModule,
   ],
   controllers: [OrdersController, PaymentsController],
   providers: [OrdersService],

@@ -31,7 +31,7 @@ import { CartModule } from '../cart/cart.module';
           secret: cfg.getOrThrow<string>('JWT_ACCESS_SECRET'),
           signOptions: {
             expiresIn: ttl as any,
-          },
+          }, 
         };
       },
     }),

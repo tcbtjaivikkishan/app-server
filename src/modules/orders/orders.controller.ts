@@ -8,6 +8,7 @@ import {
   Req,
   UseGuards,
   UnauthorizedException,
+  Body,
 } from '@nestjs/common';
 import { OrdersService } from './orders.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
@@ -18,12 +19,12 @@ export class OrdersController {
   constructor(private readonly ordersService: OrdersService) { }
 
   @Post()
-  async createOrder(@Req() req: any) {
+  async createOrder(@Req() req: any, @Body() body: any) {
     const userId = req.user.userId;
     if (!req.user?.userId) {
       throw new UnauthorizedException('User not authenticated');
     }
-    return this.ordersService.createOrderFromCart(userId);
+    return this.ordersService.createOrderFromCart(userId, body.address);
   }
 
   @Get()

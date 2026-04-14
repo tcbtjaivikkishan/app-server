@@ -7,15 +7,17 @@ import { ZohoPaymentGatewayService } from '../../integrations/payments/zoho-paym
 import { User } from '../users/schemas/user.schema';
 import { ZohoInventoryService } from '../../zoho/inventory/inventory.service';
 import { CartService } from '../cart/cart.service';
+import { Product } from '../products/schemas/product.schema';
 
 @Injectable()
 export class OrdersService {
   constructor(
-    @InjectModel(Order.name) private orderModel: Model<Order>,
-    private paymentService: ZohoPaymentGatewayService,
     private zohoInventoryService: ZohoInventoryService,
+    @InjectModel(Order.name) private orderModel: Model<Order>,
+    @InjectModel(Product.name) private productModel: Model<Product>,
     @InjectModel(User.name) private userModel: Model<User>,
     private cartService: CartService,
+    private paymentService: ZohoPaymentGatewayService,
   ) { }
 
   async createOrder(userId: string, dto: any) {
@@ -65,18 +67,46 @@ export class OrdersService {
     };
   }
 
-  async createOrderFromCart(userId: string) {
-
-    const cart = await this.getUserCartStub(userId);
+  async createOrderFromCart(userId: string, address: any) {
+    const cart = await this.cartService.getCartSummaryByUser(userId);
 
     if (!cart || cart.items.length === 0) {
       throw new Error('Cart is empty');
     }
 
-    return this.createOrder(userId, {
-      items: cart.items,
-      address: cart.address,
+    const items = await Promise.all(
+      cart.items.map(async (item: any) => {
+        const product = await this.productModel.findById(item.product_id);
+
+        if (!product) {
+          throw new Error(`Product not found: ${item.product_id}`);
+        }
+
+        return {
+          productId: product._id,
+          name: product.name,
+          price: product.price,
+          quantity: item.quantity,
+          weight: product.weight || 1,
+          image: product.image_url,
+          zohoItemId: product.zoho_item_id, // 🔥 CRITICAL
+        };
+      }),
+    );
+
+    const order = await this.createOrder(userId, {
+      items,
+      address,
     });
+
+    // 🔥 clear cart after order
+    await this.cartService.mergeGuestIntoUser('', userId); // safe no-op
+    await this.cartService.getOrCreateForUser(userId).then(c => {
+      c.items = [];
+      return c.save();
+    });
+
+    return order;
   }
 
   async getOrders(userId: string, page: number, limit: number) {

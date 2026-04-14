@@ -25,8 +25,6 @@ export class CallbackController {
       throw new BadRequestException('Authorization code missing');
     }
 
-
-
     if (!service) {
       throw new BadRequestException('Service (state) missing');
     }

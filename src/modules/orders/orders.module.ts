@@ -6,12 +6,16 @@ import { PaymentsController } from '../../integrations/payments/payments.control
 import { PaymentsModule } from '../../integrations/payments/payments.module';
 import { OrdersController } from './orders.controller';
 import { CartModule } from '../cart/cart.module';
+import { ZohoModule } from '../../zoho/zoho.module';
+import { User, UserSchema } from '../users/schemas/user.schema';
+import { Product, ProductSchema } from '../products/schemas/product.schema';
 
 @Module({
   imports: [
     MongooseModule.forFeature([
       { name: Order.name, schema: OrderSchema },
       { name: User.name, schema: UserSchema },
+      { name: Product.name, schema: ProductSchema },
     ]),
     ZohoModule,
     PaymentsModule,

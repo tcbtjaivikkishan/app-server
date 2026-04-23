@@ -70,13 +70,10 @@ export class ProductsService {
   }
 
   // 🔹 Pagination
-  async getPaginatedProducts(page: number, limit: number) {
-    const skip = (page - 1) * limit;
+  async getPaginatedProducts() {
 
     const products = await this.productModel
       .find({ is_active: true, show_in_storefront: true })
-      .skip(skip)
-      .limit(limit)
       .lean();
 
     const total = await this.productModel.countDocuments({
@@ -86,9 +83,8 @@ export class ProductsService {
 
     return {
       data: products,
-      total,
-      page,
-      totalPages: Math.ceil(total / limit),
+      total: products.length,
+      totalInDB: total,
     };
   }
 

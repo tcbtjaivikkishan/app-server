@@ -4,6 +4,7 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { User } from './schemas/user.schema';
 import { CrmService } from '../../zoho/crm/crm.service';
+import { AxiosError } from 'axios';
 
 @Injectable()
 export class UsersService {
@@ -11,7 +12,7 @@ export class UsersService {
     @InjectModel(User.name)
     private userModel: Model<User>,
     private crmService: CrmService,
-  ) {}
+  ) { }
 
   // 🔹 Find by mobile
   async findByMobile(mobile: string) {
@@ -64,10 +65,36 @@ export class UsersService {
 
   // 🔹 Add address
   async addAddress(userId: string, address: any) {
-    return this.userModel.findByIdAndUpdate(
-      userId,
-      { $push: { addresses: address } },
-      { new: true },
-    );
+    console.log('--- SERVICE HIT ---');
+    console.log('User ID:', userId);
+    console.log('Address Payload:', address);
+
+    try {
+      const result = await this.userModel.findByIdAndUpdate(
+        userId,
+        { $push: { addresses: address } },
+        { new: true, runValidators: true }
+      );
+
+      console.log('✅ DB Update Success:', result);
+      return result;
+    } catch (error: unknown) {
+      const AxiosError = error as AxiosError;
+      console.log('❌ DB ERROR:', AxiosError.message);
+      console.log(error);
+      throw error;
+    }
+  }
+
+  // 🔹 Find addresses by user ID
+  async findAddressesByUserId(userId: string) {
+    const user = await this.userModel.findById(userId);
+    return user?.addresses || [];
+  }
+
+  // 🔹 Find specific address by ID
+  async findAddressById(userId: string, addressId: string) {
+    const user = await this.userModel.findById(userId);
+    return user?.addresses.find((addr: any) => addr._id.toString() === addressId) || null;
   }
 }

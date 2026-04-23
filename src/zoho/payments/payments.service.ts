@@ -27,16 +27,20 @@ export class ZohoPaymentsService {
         },
       );
 
+      console.log('USED CLIENT ID:', {
+        payments: process.env.ZOHO_PAYMENTS_CLIENT_ID,
+        default: process.env.ZOHO_CLIENT_ID,
+      });
       const data = response.data;
 
       if (data.error) {
         throw new Error(data.error);
       }
 
-      // ⏱ Convert expires_in → expires_at
+
       const expiresAt = Date.now() + data.expires_in * 1000;
 
-      // 💾 Save token (IMPORTANT: separate service key)
+
       await this.tokenModel.findOneAndUpdate(
         { service: 'payments' },
         {
@@ -68,7 +72,7 @@ export class ZohoPaymentsService {
       throw new Error('Zoho payment token not found');
     }
 
-    // ⏳ Check expiry
+
     if (Date.now() > token.expires_at) {
       return this.refreshAccessToken(token.refresh_token);
     }
@@ -91,6 +95,10 @@ export class ZohoPaymentsService {
         },
       );
 
+      console.log('USED CLIENT ID:', {
+        payments: process.env.ZOHO_PAYMENTS_CLIENT_ID,
+        default: process.env.ZOHO_CLIENT_ID,
+      });
       console.log('REFRESH RESPONSE:', response.data);
 
       const data = response.data;

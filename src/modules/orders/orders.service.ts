@@ -9,6 +9,7 @@ import { ZohoInventoryService } from '../../zoho/inventory/inventory.service';
 import { CartService } from '../cart/cart.service';
 import { Product } from '../products/schemas/product.schema';
 import { ShippingService } from '../../integrations/shipping/shipping.service';
+import { UsersService } from '../users/users.service';
 
 @Injectable()
 export class OrdersService {
@@ -17,6 +18,7 @@ export class OrdersService {
     @InjectModel(Order.name) private orderModel: Model<Order>,
     @InjectModel(Product.name) private productModel: Model<Product>,
     @InjectModel(User.name) private userModel: Model<User>,
+    private readonly usersService: UsersService,
     private cartService: CartService,
     private paymentService: ZohoPaymentGatewayService,
     private shippingService: ShippingService,
@@ -77,7 +79,7 @@ export class OrdersService {
     };
   }
 
-  async createOrderFromCart(userId: string, address: any) {
+  async createOrderFromCart(userId: string, addressId: any) {
     const cart = await this.cartService.getCartSummaryByUser(userId);
 
     if (!cart || cart.items.length === 0) {
@@ -103,7 +105,14 @@ export class OrdersService {
         };
       }),
     );
+    const address = await this.usersService.findAddressById(
+      userId,
+      addressId,
+    );
 
+    if (!address) {
+      throw new Error('Address not found');
+    }
     const order = await this.createOrder(userId, {
       items,
       address,

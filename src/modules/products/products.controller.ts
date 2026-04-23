@@ -8,14 +8,8 @@ export class ProductsController {
   constructor(private productsService: ProductsService) { }
 
   @Get()
-  async getProducts(
-    @Query('page') page = 1,
-    @Query('limit') limit = 20,
-  ) {
-    return this.productsService.getPaginatedProducts(
-      Number(page),
-      Number(limit),
-    );
+  async getProducts() {
+    return this.productsService.getPaginatedProducts();
   }
 
   @Get('/id/:id')

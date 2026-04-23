@@ -24,7 +24,7 @@ export class OrdersController {
     if (!req.user?.userId) {
       throw new UnauthorizedException('User not authenticated');
     }
-    return this.ordersService.createOrderFromCart(userId, body.address);
+    return this.ordersService.createOrderFromCart(userId, body.addressId);
   }
 
   @Get()

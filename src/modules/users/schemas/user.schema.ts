@@ -15,8 +15,8 @@ class OTP {
 
 @Schema({ _id: true })
 class Address {
-  @Prop({ required: true })
-  label!: string;
+  @Prop()
+  label?: string;
 
   @Prop({ required: true })
   line1!: string;

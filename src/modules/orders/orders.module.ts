@@ -8,6 +8,7 @@ import { OrdersController } from './orders.controller';
 import { CartModule } from '../cart/cart.module';
 import { ZohoModule } from '../../zoho/zoho.module';
 import { User, UserSchema } from '../users/schemas/user.schema';
+import { UsersModule } from '../users/users.module';
 import { Product, ProductSchema } from '../products/schemas/product.schema';
 import { ShippingModule } from '../../integrations/shipping/shipping.module';
 
@@ -18,6 +19,7 @@ import { ShippingModule } from '../../integrations/shipping/shipping.module';
       { name: User.name, schema: UserSchema },
       { name: Product.name, schema: ProductSchema },
     ]),
+    UsersModule,
     ZohoModule,
     PaymentsModule,
     CartModule,

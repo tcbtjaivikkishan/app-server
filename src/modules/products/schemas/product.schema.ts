@@ -5,7 +5,7 @@ export type ProductDocument = Product & Document;
 
 @Schema({ timestamps: true })
 export class Product {
-  @Prop({ required: true, unique: true }) // ← unique: true already creates an index
+  @Prop({ required: true, unique: true })
   zoho_item_id!: string;
 
   @Prop({ required: true })
@@ -29,50 +29,46 @@ export class Product {
   @Prop()
   stock!: number;
 
-  @Prop({ default: true })
-  track_inventory!: boolean;
-
-  @Prop()
-  image_url!: string;
-
-  @Prop()
-  image_name!: string;
-
-  @Prop()
-  zoho_image_document_id!: string;
-
-  @Prop()
-  image_hash!: string;
-
-  @Prop()
-  image_s3_key!: string;
-
-  @Prop()
-  image_last_synced_at!: Date;
-
-  @Prop({ default: true })
-  is_active!: boolean;
-
-  @Prop({ default: true })
-  show_in_storefront!: boolean;
-
   @Prop()
   weight!: number;
 
   @Prop()
-  length!: number;
+  weight_unit!: string;
 
   @Prop()
-  width!: number;
+  dimensions!: string;
 
   @Prop()
-  height!: number;
+  zoho_image_document_id!: string;
+
+  @Prop({
+    type: {
+      image_key: String,
+      image_url: String,
+      image_hash: String,
+      image_last_synced_at: Date,
+      image_name: String,
+      image_s3_key: String,
+    },
+    _id: false,
+  })
+  image!: {
+    image_key: string;
+    image_url: string;
+    image_hash: string;
+    image_last_synced_at: Date;
+    image_name: string;
+    image_s3_key: string;
+  };
+
+  @Prop({ default: true })
+  is_active!: boolean;
 }
 
 export const ProductSchema = SchemaFactory.createForClass(Product);
 
-// ✅ Remove zoho_item_id index here — already handled by unique:true above
+
 ProductSchema.index({ category_id: 1 });
 ProductSchema.index({ name: 'text', description: 'text' });
-ProductSchema.index({ is_active: 1, show_in_storefront: 1 });
+ProductSchema.index({ is_active: 1 });
 ProductSchema.index({ price: 1 });

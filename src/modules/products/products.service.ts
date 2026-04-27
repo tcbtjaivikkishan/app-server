@@ -15,7 +15,7 @@ export class ProductsService {
     private productModel: Model<Product>,
     private zohoInventoryService: ZohoInventoryService,
     private zohoImageSyncService: ZohoImageSyncService,
-  ) {}
+  ) { }
 
   // 🔁 Daily safety net sync at 2AM — catches anything webhooks missed
   @Cron('0 0 2 * * *')

@@ -6,6 +6,7 @@ import { ZohoImageSyncService } from './zoho-image-sync.service';
 import { S3UploadService } from '../../common/s3-upload.service';
 import { CoreModule } from '../../zoho/core/core.module';
 import { Product, ProductSchema } from '../../modules/products/schemas/product.schema';
+import { ZohoModule } from '../../zoho/zoho.module';
 
 @Module({
   imports: [
@@ -14,9 +15,10 @@ import { Product, ProductSchema } from '../../modules/products/schemas/product.s
     MongooseModule.forFeature([
       { name: Product.name, schema: ProductSchema },
     ]),
+    ZohoModule,
   ],
   controllers: [ZohoImageSyncController],
-  providers: [ZohoImageSyncService, S3UploadService],
-  exports: [ZohoImageSyncService], // ✅ Required for ProductsService
+  providers: [ZohoImageSyncService, ZohoModule, S3UploadService],
+  exports: [ZohoImageSyncService],
 })
-export class ZohoImageSyncModule {}
+export class ZohoImageSyncModule { }

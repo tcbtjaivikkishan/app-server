@@ -57,12 +57,12 @@ export class CartService {
   }
 
   private async upsertItem(cart: Cart, productId: string, quantity: number) {
-    // ✅ Validate productId
+
     if (!Types.ObjectId.isValid(productId)) {
       throw new BadRequestException('Invalid product ID');
     }
 
-    // ✅ Validate quantity
+
     if (!Number.isInteger(quantity) || quantity < 0) {
       throw new BadRequestException('Invalid quantity');
     }
@@ -71,15 +71,15 @@ export class CartService {
 
     const product = await this.productModel.findById(pid).lean();
 
-    if (!product || !product.is_active || !product.show_in_storefront) {
+    if (!product || !product.is_active) {
       throw new BadRequestException('Invalid product');
     }
 
-    if (product.track_inventory && (product.stock ?? 0) <= 0) {
+    if ((product.stock ?? 0) <= 0) {
       throw new BadRequestException('Out of stock');
     }
 
-    if (product.track_inventory && quantity > (product.stock ?? 0)) {
+    if (quantity > (product.stock ?? 0)) {
       throw new BadRequestException('Insufficient stock');
     }
 
@@ -125,10 +125,9 @@ export class CartService {
       .find({
         _id: { $in: productIds },
         is_active: true,
-        show_in_storefront: true,
       })
       .select(
-        'name price stock track_inventory image_url is_active show_in_storefront',
+        'name price stock image weight weight_unit dimensions is_active',
       )
       .lean();
 
@@ -138,15 +137,32 @@ export class CartService {
       const p = byId.get(i.product_id.toString());
       const price = p?.price ?? 0;
 
+      let weight = 0;
+      if (p?.weight) {
+        weight =
+          p.weight_unit === 'kg'
+            ? p.weight * 1000
+            : p.weight;
+      }
+
       return {
         product_id: i.product_id,
         quantity: i.quantity,
         name: p?.name,
         price,
         line_total: price * i.quantity,
-        image_url: p?.image_url,
+
+        image_url: p?.image?.image_url || null,
+
+        weight,
+        total_weight: weight * i.quantity,
       };
     });
+
+    const totalWeight = detailed.reduce(
+      (sum, item) => sum + item.total_weight,
+      0,
+    );
 
     const total_amount = detailed.reduce(
       (sum, it) => sum + (it.line_total ?? 0),
@@ -156,6 +172,7 @@ export class CartService {
     return {
       cart_id: cart._id,
       items: detailed,
+      totalWeight,
       total_amount,
     };
   }
@@ -165,7 +182,7 @@ export class CartService {
       guest_session_id: guestSessionId,
     });
 
-    // ✅ Safe check
+
     if (!guestCart || !guestCart.items?.length) return;
 
     const userCart = await this.getOrCreateForUser(userId);

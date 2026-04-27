@@ -100,7 +100,7 @@ export class OrdersService {
           price: product.price,
           quantity: item.quantity,
           weight: product.weight || 1,
-          image: product.image_url,
+          image: product.image?.image_url,
           zohoItemId: product.zoho_item_id,
         };
       }),

@@ -24,6 +24,12 @@ class Address {
   @Prop()
   line2?: string;
 
+  @Prop()
+  receiver_name?: string;
+
+  @Prop()
+  receiver_phone?: string;
+
   @Prop({ required: true })
   city!: string;
 

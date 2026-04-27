@@ -1,19 +1,20 @@
 import { Injectable } from '@nestjs/common';
 import { ZohoHttpService } from '../core/zoho-http.service';
 import { ConfigService } from '@nestjs/config';
+import { ZohoAuthService } from '../core/zoho-auth.service';
 
 @Injectable()
 export class ZohoInventoryService {
   constructor(
     private http: ZohoHttpService,
     private config: ConfigService,
-  ) {}
+    private zohoAuthService: ZohoAuthService,
+  ) { }
 
   private getOrgId() {
     return this.config.get<string>('ZOHO_ORG_ID') || '';
   }
 
-  // ✅ GET ITEMS (already exists)
   async getItems(page = 1, perPage = 200): Promise<any> {
     return this.http.request(
       'GET',
@@ -22,7 +23,42 @@ export class ZohoInventoryService {
     );
   }
 
-  // 🔥 CREATE SALES ORDER (IMPORTANT)
+  async getItem(itemId: string): Promise<any> {
+    const response = await this.http.request(
+      'GET',
+      `https://www.zohoapis.in/inventory/v1/items/${itemId}?organization_id=${this.getOrgId()}`,
+      'inventory',
+    );
+
+    return response?.item || null;
+  }
+
+  async downloadItemImage(itemId: string): Promise<Buffer> {
+    return this.http.request(
+      'GET',
+      `https://www.zohoapis.in/inventory/v1/items/${itemId}/image?organization_id=${this.getOrgId()}`,
+      'inventory',
+      undefined,
+      { responseType: 'arraybuffer' }, // ✅ NOW WORKS
+    );
+  }
+
+  async getItemImageUploadPayload(
+    itemId: string,
+    existingHash?: string,
+  ) {
+    const imageUrl = `https://www.zohoapis.in/inventory/v1/items/${itemId}/image?organization_id=${this.getOrgId()}`;
+
+    const token = await this.zohoAuthService.getValidAccessToken('inventory');
+    
+    return {
+      imageUrl,
+      itemId,
+      zohoToken: token,
+      existingHash,
+    };
+  }
+
   async createSalesOrder(order: any, customerId: string) {
     const payload = {
       customer_id: customerId,
@@ -30,7 +66,7 @@ export class ZohoInventoryService {
       reference_number: order.orderId,
 
       line_items: order.items.map((item: any) => ({
-        item_id: item.zohoItemId, // MUST EXIST
+        item_id: item.zohoItemId,
         name: item.name,
         rate: item.price,
         quantity: item.quantity,

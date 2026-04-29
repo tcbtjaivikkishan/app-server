@@ -1,4 +1,4 @@
-import { BadRequestException, Controller, Get, Param, Query } from '@nestjs/common';
+import { BadRequestException, Controller, Get, Param, Post, Query } from '@nestjs/common';
 import { ProductsService } from './products.service';
 import { isValidObjectId } from 'mongoose';
 
@@ -8,14 +8,14 @@ export class ProductsController {
   constructor(private productsService: ProductsService) { }
 
   @Get()
-  async getProducts(
-    @Query('page') page = 1,
-    @Query('limit') limit = 20,
-  ) {
-    return this.productsService.getPaginatedProducts(
-      Number(page),
-      Number(limit),
-    );
+  async getProducts() {
+    return this.productsService.getPaginatedProducts();
+  }
+
+  @Post('sync-all-now')
+  async syncAllNow() {
+    await this.productsService.syncZohoProducts();
+    return { message: 'Full sync started' };
   }
 
   @Get('/id/:id')

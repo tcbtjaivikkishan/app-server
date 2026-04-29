@@ -1,18 +1,18 @@
-/* eslint-disable @typescript-eslint/no-unsafe-member-access */
-/* eslint-disable @typescript-eslint/no-unsafe-argument */
-/* eslint-disable @typescript-eslint/no-unsafe-return */
-/* eslint-disable @typescript-eslint/no-unused-vars */
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
-// zoho/core/zoho-http.service.ts
-
 import { Injectable } from '@nestjs/common';
 import { ZohoAuthService } from './zoho-auth.service';
 import { ZohoService } from '../config/zoho-scope.config';
+
 @Injectable()
 export class ZohoHttpService {
   constructor(private auth: ZohoAuthService) {}
 
-  async request(method: string, url: string, service: ZohoService, body?: any) {
+  async request(
+    method: string,
+    url: string,
+    service: ZohoService,
+    body?: any,
+    options?: { responseType?: 'json' | 'arraybuffer' }, // ✅ NEW (optional)
+  ) {
     const token = await this.auth.getValidAccessToken(service);
 
     const res = await fetch(url, {
@@ -24,7 +24,23 @@ export class ZohoHttpService {
       body: body ? JSON.stringify(body) : undefined,
     });
 
-    const text = await res.text(); // ✅ ALWAYS SAFE
+    // =========================
+    // 🖼️ HANDLE IMAGE / BINARY
+    // =========================
+    if (options?.responseType === 'arraybuffer') {
+      const buffer = await res.arrayBuffer();
+
+      if (!res.ok) {
+        throw new Error('Zoho image fetch failed');
+      }
+
+      return Buffer.from(buffer);
+    }
+
+    // =========================
+    // 📦 DEFAULT JSON FLOW (UNCHANGED)
+    // =========================
+    const text = await res.text();
 
     let data: any = null;
 

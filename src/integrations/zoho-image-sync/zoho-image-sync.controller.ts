@@ -10,7 +10,7 @@ export class ZohoImageSyncController {
   constructor(
     private readonly zohoImageSyncService: ZohoImageSyncService,
     private readonly configService: ConfigService,
-  ) {}
+  ) { }
 
   // ✅ Validate webhook secret token
   private validateToken(token: string): boolean {

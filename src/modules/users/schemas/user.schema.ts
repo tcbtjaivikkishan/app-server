@@ -15,14 +15,20 @@ class OTP {
 
 @Schema({ _id: true })
 class Address {
-  @Prop({ required: true })
-  label!: string;
+  @Prop()
+  label?: string;
 
   @Prop({ required: true })
   line1!: string;
 
   @Prop()
   line2?: string;
+
+  @Prop()
+  receiver_name?: string;
+
+  @Prop()
+  receiver_phone?: string;
 
   @Prop({ required: true })
   city!: string;

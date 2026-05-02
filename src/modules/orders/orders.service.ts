@@ -10,6 +10,7 @@ import { CartService } from '../cart/cart.service';
 import { Product } from '../products/schemas/product.schema';
 import { ShippingService } from '../../integrations/shipping/shipping.service';
 import { UsersService } from '../users/users.service';
+import { SmsService } from './sms.service';
 
 @Injectable()
 export class OrdersService {
@@ -22,6 +23,7 @@ export class OrdersService {
     private cartService: CartService,
     private paymentService: ZohoPaymentGatewayService,
     private shippingService: ShippingService,
+    private readonly smsService: SmsService,
   ) { }
 
   async createOrder(userId: string, dto: any) {
@@ -253,8 +255,20 @@ export class OrdersService {
       paymentSessionId: order?.paymentSessionId,
     });
 
+    const receiver_phone = (order as any)?.address?.receiver_phone;
 
+    // ✅ Case 1: Already paid → send SMS (important)
     if (order.paymentStatus === 'paid') {
+      if (receiver_phone) {
+        this.smsService
+          .sendOrderSuccessSMS(
+            receiver_phone,
+            order.finalAmount,
+            order.orderId,
+          )
+          .catch(err => console.error('SMS async error:', err));
+      }
+
       return { status: 'paid', orderId: order.orderId };
     }
 
@@ -270,17 +284,31 @@ export class OrdersService {
 
     const { status, paymentId, amount } = result;
 
+    // ✅ Case 2: Payment success
     if (status === 'succeeded' && paymentId && amount) {
-
       await this.handlePaymentSuccess(
         orderId,
         paymentId,
         parseFloat(amount),
       );
+
+      // ✅ Send SMS AFTER success
+      if (receiver_phone) {
+        this.smsService
+          .sendOrderSuccessSMS(
+            receiver_phone,
+            parseFloat(amount),
+            order.orderId,
+          )
+          .catch(err => console.error('SMS async error:', err));
+      }
+
       return { status: 'paid', orderId: order.orderId };
     }
 
+    // ❌ Case 3: Failed
     await this.handlePaymentFailure(orderId);
+
     return { status: 'failed', orderId: order.orderId };
   }
 

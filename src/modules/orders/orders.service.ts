@@ -236,23 +236,52 @@ export class OrdersService {
 
     const user = await this.userModel.findById(order.userId);
 
-    if (!user?.zoho_contact_id) {
-      order.zohoSyncError = 'Missing zoho_contact_id';
+    if (!user) {
+      order.zohoSyncError = 'User not found';
       await order.save();
       return;
     }
 
+    // Auto-create Zoho Inventory contact if missing
+    let zohoContactId = user.zoho_contact_id;
+
+    if (!zohoContactId) {
+      try {
+        console.log(`[Order] No zoho_contact_id for user ${order.userId}, creating...`);
+        zohoContactId = await this.zohoInventoryService.createOrGetContact({
+          name: user?.name,
+          mobile_number: user?.mobile_number,
+          email: user?.email,
+        });
+
+        // Save the contact_id back to the user for future orders
+        await this.userModel.findByIdAndUpdate(order.userId, {
+          zoho_contact_id: zohoContactId,
+        });
+        console.log(`[Order] Saved zoho_contact_id ${zohoContactId} to user ${order.userId}`);
+      } catch (err: any) {
+        console.error('[Order] Failed to create Zoho contact:', err.message);
+        order.zohoSyncError = `Contact creation failed: ${err.message}`;
+        await order.save();
+        return;
+      }
+    }
+
     try {
-      const zohoOrderId = await this.zohoInventoryService.createSalesOrder(
+      const result = await this.zohoInventoryService.createSalesOrderWithInvoice(
         order,
-        user.zoho_contact_id,
+        zohoContactId,
       );
 
-      order.zohoSalesOrderId = zohoOrderId;
+      order.zohoSalesOrderId = result.salesOrderId;
+      order.zohoInvoiceId = result.invoiceId;
+      order.zohoInvoiceNumber = result.invoiceNumber;
+      order.zohoPaymentId = result.paymentId;
       order.isSyncedToZoho = true;
       order.orderStatus = 'processing';
 
       await order.save();
+      console.log(`[Order] ✅ Zoho sync complete — SO: ${result.salesOrderId}, Invoice: ${result.invoiceNumber}, Payment: ${result.paymentId}`);
     } catch (error: any) {
       console.error('Zoho Sync Failed:', error);
 

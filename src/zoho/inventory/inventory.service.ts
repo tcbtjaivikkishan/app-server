@@ -112,6 +112,7 @@ export class ZohoInventoryService {
     const payload = {
       customer_id: customerId,
       reference_number: order.orderId,
+      salesperson_name: 'TCBT App',
       line_items: order.items.map((item: any) => ({
         item_id: item.zohoItemId,
         name: item.name,
@@ -144,5 +145,173 @@ export class ZohoInventoryService {
     );
 
     return response.salesorder?.salesorder_id;
+  }
+
+  /**
+   * Create an invoice from an existing sales order.
+   * Zoho will auto-populate line items from the SO.
+   */
+  async createInvoiceFromSalesOrder(
+    salesorderId: string,
+    customerId: string,
+  ): Promise<{ invoiceId: string; invoiceNumber: string }> {
+    const orgId = this.getOrgId();
+
+    const response = await this.http.request(
+      'POST',
+      `https://www.zohoapis.in/inventory/v1/invoices/fromsalesorder` +
+      `?organization_id=${orgId}&salesorder_id=${salesorderId}`,
+      'inventory',
+    );
+
+    const invoice = response?.invoice;
+    if (!invoice?.invoice_id) {
+      throw new Error('Failed to create invoice — no invoice_id returned');
+    }
+
+    console.log(`[Zoho] Invoice created: ${invoice.invoice_number} (${invoice.invoice_id}) from SO ${salesorderId}`);
+
+    return {
+      invoiceId: invoice.invoice_id,
+      invoiceNumber: invoice.invoice_number,
+    };
+  }
+
+  /**
+   * Record a customer payment against an invoice to mark it as Paid.
+   */
+  async recordPaymentForInvoice(
+    customerId: string,
+    invoiceId: string,
+    amount: number,
+    paymentReference: string,
+  ): Promise<string> {
+    const orgId = this.getOrgId();
+
+    const payload = {
+      customer_id: customerId,
+      payment_mode: 'Online Payment',
+      amount,
+      date: new Date().toISOString().split('T')[0], // YYYY-MM-DD
+      reference_number: paymentReference,
+      invoices: [
+        {
+          invoice_id: invoiceId,
+          amount_applied: amount,
+        },
+      ],
+    };
+
+    const response = await this.http.request(
+      'POST',
+      `https://www.zohoapis.in/inventory/v1/customerpayments` +
+      `?organization_id=${orgId}`,
+      'inventory',
+      payload,
+    );
+
+    const paymentId = response?.payment?.payment_id;
+    console.log(`[Zoho] Payment recorded: ${paymentId} for invoice ${invoiceId} (₹${amount})`);
+
+    return paymentId;
+  }
+
+  /**
+   * Full flow: Create Sales Order → Invoice → Record Payment.
+   * Returns all IDs for tracking.
+   */
+  async createSalesOrderWithInvoice(
+    order: any,
+    customerId: string,
+  ): Promise<{
+    salesOrderId: string;
+    invoiceId: string;
+    invoiceNumber: string;
+    paymentId: string;
+  }> {
+    // 1. Create Sales Order
+    const salesOrderId = await this.createSalesOrder(order, customerId);
+    console.log(`[Zoho] Step 1/3: Sales Order created: ${salesOrderId}`);
+
+    // 2. Create Invoice from Sales Order
+    const { invoiceId, invoiceNumber } = await this.createInvoiceFromSalesOrder(
+      salesOrderId,
+      customerId,
+    );
+    console.log(`[Zoho] Step 2/3: Invoice created: ${invoiceNumber}`);
+
+    // 3. Record Payment to clear the invoice
+    const paymentId = await this.recordPaymentForInvoice(
+      customerId,
+      invoiceId,
+      order.finalAmount,
+      order.orderId, // Use app order ID as payment reference
+    );
+    console.log(`[Zoho] Step 3/3: Payment recorded: ${paymentId}`);
+
+    return { salesOrderId, invoiceId, invoiceNumber, paymentId };
+  }
+
+  /**
+   * Create or find a contact in Zoho Inventory by phone number.
+   * Returns the contact_id.
+   */
+  async createOrGetContact(user: {
+    name?: string;
+    mobile_number: string;
+    email?: string;
+  }): Promise<string> {
+    const orgId = this.getOrgId();
+
+    // 1. Search for existing contact by phone
+    try {
+      const searchRes = await this.http.request(
+        'GET',
+        `https://www.zohoapis.in/inventory/v1/contacts` +
+        `?organization_id=${orgId}&phone=${encodeURIComponent(user.mobile_number)}`,
+        'inventory',
+      );
+
+      const contacts = searchRes?.contacts ?? [];
+      const match = contacts.find(
+        (c: any) => c.phone === user.mobile_number || c.mobile === user.mobile_number,
+      );
+
+      if (match?.contact_id) {
+        console.log(`[Zoho] Found existing contact: ${match.contact_id} for ${user.mobile_number}`);
+        return match.contact_id;
+      }
+    } catch (err: any) {
+      console.warn(`[Zoho] Contact search failed: ${err.message}, will create new`);
+    }
+
+    // 2. Create new contact
+    const contactName = user.name || 'App Customer';
+    const payload: any = {
+      contact_name: contactName,
+      contact_type: 'customer',
+      phone: user.mobile_number,
+      mobile: user.mobile_number,
+    };
+
+    if (user.email) {
+      payload.email = user.email;
+    }
+
+    const createRes = await this.http.request(
+      'POST',
+      `https://www.zohoapis.in/inventory/v1/contacts` +
+      `?organization_id=${orgId}`,
+      'inventory',
+      payload,
+    );
+
+    const contactId = createRes?.contact?.contact_id;
+    if (!contactId) {
+      throw new Error('Failed to create Zoho Inventory contact — no contact_id returned');
+    }
+
+    console.log(`[Zoho] Created new contact: ${contactId} for ${user.mobile_number}`);
+    return contactId;
   }
 }

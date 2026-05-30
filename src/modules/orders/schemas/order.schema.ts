@@ -75,6 +75,15 @@ export class Order {
   @Prop()
   zohoSalesOrderId?: string;
 
+  @Prop()
+  zohoInvoiceId?: string;
+
+  @Prop()
+  zohoInvoiceNumber?: string;
+
+  @Prop()
+  zohoPaymentId?: string;
+
   @Prop({ default: false })
   isSyncedToZoho?: boolean;
 

@@ -24,7 +24,7 @@ export class PaymentsController {
     private readonly ordersService: OrdersService,
     private readonly configService: ConfigService,
     private readonly zohoPaymentLinksService: ZohoPaymentLinksService,
-  ) { }
+  ) {}
 
   @Post('webhook')
   async handleWebhook(@Req() req: RawBodyRequest) {
@@ -57,11 +57,7 @@ export class PaymentsController {
     if (!orderId) return { ok: false };
 
     if (eventType === 'payment.succeeded') {
-      await this.ordersService.handlePaymentSuccess(
-        orderId,
-        paymentId,
-        amount,
-      );
+      await this.ordersService.handlePaymentSuccess(orderId, paymentId, amount);
     } else if (eventType === 'payment.failed') {
       await this.ordersService.handlePaymentFailure(orderId);
     }
@@ -96,11 +92,7 @@ export class PaymentsController {
   }
 
   @Post('payment-link')
-  async createPaymentLink(
-    @Body() body: CreatePaymentLinkDto,
-  ) {
-    return this.zohoPaymentLinksService.createPaymentLink(
-      body,
-    );
+  async createPaymentLink(@Body() body: CreatePaymentLinkDto) {
+    return this.zohoPaymentLinksService.createPaymentLink(body);
   }
 }

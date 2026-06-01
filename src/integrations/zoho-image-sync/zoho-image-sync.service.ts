@@ -44,7 +44,6 @@ export class ZohoImageSyncService {
     zohoImageName: string | undefined | null,
     existingImage: ImageMeta | null,
   ): Promise<ImageMeta | null> {
-
     // ── 1. No image in Zoho ──────────────────────────────────────
     if (!zohoImageName) {
       // If we previously had an image, delete it from S3
@@ -70,7 +69,9 @@ export class ZohoImageSyncService {
 
     // ── 3. Detect image name change (force re-upload if changed) ─
     const imageNameChanged = existingImage?.image_name !== zohoImageName;
-    const existingHashToCheck = imageNameChanged ? undefined : existingImage?.image_hash;
+    const existingHashToCheck = imageNameChanged
+      ? undefined
+      : existingImage?.image_hash;
 
     // ── 4. Upload to S3 (skips if hash matches) ──────────────────
     const uploadResult = await this.withRetry(
@@ -85,7 +86,11 @@ export class ZohoImageSyncService {
     );
 
     // ── 5. If image actually changed, delete old S3 object ───────
-    if (!uploadResult.skipped && imageNameChanged && existingImage?.image_s3_key) {
+    if (
+      !uploadResult.skipped &&
+      imageNameChanged &&
+      existingImage?.image_s3_key
+    ) {
       await this.safeDeleteFromS3(existingImage.image_s3_key);
     }
 
@@ -124,10 +129,7 @@ export class ZohoImageSyncService {
     }
   }
 
-  private async withRetry<T>(
-    fn: () => Promise<T>,
-    label: string,
-  ): Promise<T> {
+  private async withRetry<T>(fn: () => Promise<T>, label: string): Promise<T> {
     let lastError: any;
 
     for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {

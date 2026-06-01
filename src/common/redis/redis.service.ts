@@ -48,7 +48,6 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
         }
         this.isConnected = false;
       });
-
     } catch {
       console.warn('⚠️ Redis disabled');
     }

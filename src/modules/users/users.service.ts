@@ -12,7 +12,7 @@ export class UsersService {
     @InjectModel(User.name)
     private userModel: Model<User>,
     private crmService: CrmService,
-  ) { }
+  ) {}
 
   // 🔹 Find by mobile
   async findByMobile(mobile: string) {
@@ -149,7 +149,10 @@ export class UsersService {
   // 🔹 Find specific address by ID
   async findAddressById(userId: string, addressId: string) {
     const user = await this.userModel.findById(userId);
-    return user?.addresses.find((addr: any) => addr._id.toString() === addressId) || null;
+    return (
+      user?.addresses.find((addr: any) => addr._id.toString() === addressId) ||
+      null
+    );
   }
 
   // 🔹 Delete address
@@ -175,7 +178,7 @@ export class UsersService {
             addresses: { _id: new Types.ObjectId(addressId) },
           },
         },
-        { new: true }
+        { new: true },
       );
 
       if (!updatedUser) {
@@ -184,7 +187,10 @@ export class UsersService {
 
       const afterCount = updatedUser.addresses.length;
       if (beforeCount === afterCount) {
-        console.warn('⚠️ Address was NOT removed — ID may not match:', addressId);
+        console.warn(
+          '⚠️ Address was NOT removed — ID may not match:',
+          addressId,
+        );
         throw new Error('Address not found or already deleted');
       }
 

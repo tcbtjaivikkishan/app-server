@@ -14,12 +14,12 @@ export class CallbackController {
   constructor(
     private readonly zohoAuthService: ZohoAuthService,
     private readonly zohoPaymentsService: ZohoPaymentsService,
-  ) { }
+  ) {}
 
   @Get()
   async handleCallback(
     @Query('code') code?: string,
-    @Query('state') service?: ZohoService
+    @Query('state') service?: ZohoService,
   ) {
     if (!code) {
       throw new BadRequestException('Authorization code missing');
@@ -36,7 +36,6 @@ export class CallbackController {
     }
 
     try {
-
       if (service === 'payments') {
         const data = await this.zohoPaymentsService.exchangeCodeForToken(code);
 

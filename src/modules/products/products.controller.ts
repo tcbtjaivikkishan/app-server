@@ -45,12 +45,8 @@ export class ProductsController {
   // Useful for testing webhooks manually
   // ─────────────────────────────────────────
   @Post('sync/:zohoItemId')
-  async syncSingleProduct(
-    @Param('zohoItemId') zohoItemId: string,
-  ) {
-    await this.productSyncService.syncSingleItem(
-      zohoItemId,
-    );
+  async syncSingleProduct(@Param('zohoItemId') zohoItemId: string) {
+    await this.productSyncService.syncSingleItem(zohoItemId);
 
     return {
       success: true,
@@ -69,21 +65,15 @@ export class ProductsController {
     // allow Mongo ObjectId OR Zoho item/group ID
     const isMongoId = isValidObjectId(id);
 
-    return this.productsService.getProductById(
-      isMongoId ? id : String(id),
-    );
+    return this.productsService.getProductById(isMongoId ? id : String(id));
   }
 
   // ─────────────────────────────────────────
   // Filtered products
   // ─────────────────────────────────────────
   @Get('/filter')
-  async getFilteredProducts(
-    @Query() query: any,
-  ) {
-    return this.productsService.getFilteredProducts(
-      query,
-    );
+  async getFilteredProducts(@Query() query: any) {
+    return this.productsService.getFilteredProducts(query);
   }
 
   // ─────────────────────────────────────────
@@ -98,20 +88,12 @@ export class ProductsController {
   // Search products
   // ─────────────────────────────────────────
   @Get('/search')
-  async searchProducts(
-    @Query('q') q: string,
-    @Query('limit') limit?: number,
-  ) {
+  async searchProducts(@Query('q') q: string, @Query('limit') limit?: number) {
     if (!q?.trim()) {
-      throw new BadRequestException(
-        'Search query is required',
-      );
+      throw new BadRequestException('Search query is required');
     }
 
-    return this.productsService.searchProducts(
-      q,
-      Number(limit) || 10,
-    );
+    return this.productsService.searchProducts(q, Number(limit) || 10);
   }
 
   // ─────────────────────────────────────────

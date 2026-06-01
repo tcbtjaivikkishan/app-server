@@ -4,7 +4,7 @@ import { AddAddressDto } from './dto/add-address.dto';
 
 @Controller('users')
 export class UsersController {
-  constructor(private usersService: UsersService) { }
+  constructor(private usersService: UsersService) {}
 
   @Get(':id')
   getUser(@Param('id') id: string) {
@@ -16,12 +16,8 @@ export class UsersController {
     return this.usersService.updateUser(id, body);
   }
 
-
   @Patch(':id/address')
-  addAddress(
-    @Param('id') id: string,
-    @Body() body: AddAddressDto,
-  ) {
+  addAddress(@Param('id') id: string, @Body() body: AddAddressDto) {
     return this.usersService.addAddress(id, body);
   }
 
@@ -40,7 +36,10 @@ export class UsersController {
   }
 
   @Get(':id/address/:addressId')
-  getUserAddress(@Param('id') id: string, @Param('addressId') addressId: string) {
+  getUserAddress(
+    @Param('id') id: string,
+    @Param('addressId') addressId: string,
+  ) {
     return this.usersService.findAddressById(id, addressId);
   }
 

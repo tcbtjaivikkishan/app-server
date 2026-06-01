@@ -26,12 +26,12 @@ import { CartModule } from '../cart/cart.module';
       inject: [ConfigService],
       useFactory: (cfg: ConfigService) => {
         const ttl = cfg.get<string>('ACCESS_TOKEN_TTL') ?? '15m';
-    
+
         return {
           secret: cfg.getOrThrow<string>('JWT_ACCESS_SECRET'),
           signOptions: {
             expiresIn: ttl as any,
-          }, 
+          },
         };
       },
     }),

@@ -12,7 +12,7 @@ export class WishlistService {
 
     @InjectModel(Product.name)
     private productModel: Model<ProductDocument>,
-  ) { }
+  ) {}
 
   async getWishlist(userId: string) {
     let wishlist = await this.wishlistModel.findOne({ userId });

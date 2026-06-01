@@ -17,4 +17,3 @@ import { Cart, CartSchema } from './schemas/cart.schema';
   exports: [CartService],
 })
 export class CartModule {}
-

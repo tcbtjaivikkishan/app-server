@@ -5,15 +5,14 @@ export type CategoryDocument = Category & Document;
 
 @Schema({ timestamps: true })
 export class Category {
+  @Prop({ required: true, unique: true })
+  category_id!: string;
 
-    @Prop({ required: true, unique: true })
-    category_id!: string;
+  @Prop({ required: true })
+  name!: string;
 
-    @Prop({ required: true })
-    name!: string;
-
-    @Prop({ default: true })
-    is_active!: boolean;
+  @Prop({ default: true })
+  is_active!: boolean;
 }
 
 export const CategorySchema = SchemaFactory.createForClass(Category);

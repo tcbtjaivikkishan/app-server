@@ -4,9 +4,7 @@ import { ZohoService } from '../config/zoho-scope.config';
 
 @Injectable()
 export class ZohoHttpService {
-  constructor(
-    private readonly auth: ZohoAuthService,
-  ) {}
+  constructor(private readonly auth: ZohoAuthService) {}
 
   async request(
     method: string,
@@ -14,39 +12,27 @@ export class ZohoHttpService {
     service: ZohoService,
     body?: any,
     options?: {
-      responseType?:
-        | 'json'
-        | 'arraybuffer'
-        | 'stream';
+      responseType?: 'json' | 'arraybuffer' | 'stream';
     },
   ) {
-
-    const token =
-      await this.auth.getValidAccessToken(
-        service,
-      );
+    const token = await this.auth.getValidAccessToken(service);
 
     const res = await fetch(url, {
       method,
 
       headers: {
-        Authorization:
-          `Zoho-oauthtoken ${token}`,
+        Authorization: `Zoho-oauthtoken ${token}`,
 
-        'Content-Type':
-          'application/json',
+        'Content-Type': 'application/json',
       },
 
-      body: body
-        ? JSON.stringify(body)
-        : undefined,
+      body: body ? JSON.stringify(body) : undefined,
     });
 
     // ─────────────────────────────────────
     // STREAM RESPONSE
     // ─────────────────────────────────────
     if (options?.responseType === 'stream') {
-
       if (!res.ok) {
         throw {
           response: {
@@ -61,12 +47,8 @@ export class ZohoHttpService {
     // ─────────────────────────────────────
     // ARRAYBUFFER RESPONSE
     // ─────────────────────────────────────
-    if (
-      options?.responseType === 'arraybuffer'
-    ) {
-
-      const buffer =
-        await res.arrayBuffer();
+    if (options?.responseType === 'arraybuffer') {
+      const buffer = await res.arrayBuffer();
 
       if (!res.ok) {
         throw {
@@ -87,34 +69,17 @@ export class ZohoHttpService {
     let data: any = null;
 
     try {
-
-      data = text
-        ? JSON.parse(text)
-        : null;
-
+      data = text ? JSON.parse(text) : null;
     } catch {
+      console.error('Non-JSON response:', text);
 
-      console.error(
-        'Non-JSON response:',
-        text,
-      );
-
-      throw new Error(
-        'Zoho returned invalid JSON',
-      );
+      throw new Error('Zoho returned invalid JSON');
     }
 
     if (!res.ok) {
+      console.error('Zoho API Error:', data || text);
 
-      console.error(
-        'Zoho API Error:',
-        data || text,
-      );
-
-      throw new Error(
-        data?.message ||
-        'Zoho API failed',
-      );
+      throw new Error(data?.message || 'Zoho API failed');
     }
 
     return data;

@@ -5,14 +5,8 @@ import { ZohoPaymentsModule } from '../../zoho/payments/payments.module';
 import { ZohoPaymentLinksService } from './zoho-payment-links.service';
 
 @Module({
-    imports: [
-        ZohoModule,
-        ZohoPaymentsModule
-    ],
-    providers: [
-        ZohoPaymentGatewayService,
-        ZohoPaymentLinksService,
-    ],
-    exports: [ZohoPaymentGatewayService, ZohoPaymentLinksService],
+  imports: [ZohoModule, ZohoPaymentsModule],
+  providers: [ZohoPaymentGatewayService, ZohoPaymentLinksService],
+  exports: [ZohoPaymentGatewayService, ZohoPaymentLinksService],
 })
-export class PaymentsModule { }
+export class PaymentsModule {}

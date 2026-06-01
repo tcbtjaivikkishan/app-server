@@ -18,10 +18,9 @@ import { ZohoImageSyncModule } from './integrations/zoho-image-sync/zoho-image-s
 import { ZohoPaymentsModule } from './zoho/payments/payments.module';
 import { ShippingModule } from './integrations/shipping/shipping.module';
 
-
 @Module({
   imports: [
-    ConfigModule.forRoot({ isGlobal: true}),
+    ConfigModule.forRoot({ isGlobal: true }),
     MongooseModule.forRootAsync({
       inject: [ConfigService],
       useFactory: (configService: ConfigService) => ({

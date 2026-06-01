@@ -1,5 +1,5 @@
-import { Body, Controller, Get, Post } from "@nestjs/common";
-import { CouponService } from "./coupon.service";
+import { Body, Controller, Get, Post } from '@nestjs/common';
+import { CouponService } from './coupon.service';
 
 @Controller('coupon')
 export class CouponController {

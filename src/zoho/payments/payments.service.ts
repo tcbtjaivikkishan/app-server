@@ -9,7 +9,7 @@ export class ZohoPaymentsService {
   constructor(
     @InjectModel(ZohoToken.name)
     private tokenModel: Model<ZohoToken>,
-  ) { }
+  ) {}
 
   async exchangeCodeForToken(code: string) {
     try {
@@ -37,9 +37,7 @@ export class ZohoPaymentsService {
         throw new Error(data.error);
       }
 
-
       const expiresAt = Date.now() + data.expires_in * 1000;
-
 
       await this.tokenModel.findOneAndUpdate(
         { service: 'payments' },
@@ -56,10 +54,7 @@ export class ZohoPaymentsService {
     } catch (error: unknown) {
       const err = error as AxiosError;
 
-      console.error(
-        'Zoho Payment Error:',
-        err.response?.data || err.message,
-      );
+      console.error('Zoho Payment Error:', err.response?.data || err.message);
 
       throw error;
     }
@@ -71,7 +66,6 @@ export class ZohoPaymentsService {
     if (!token) {
       throw new Error('Zoho payment token not found');
     }
-
 
     if (Date.now() > token.expires_at) {
       return this.refreshAccessToken(token.refresh_token);

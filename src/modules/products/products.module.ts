@@ -26,13 +26,8 @@ import { ProductSyncService } from './product-sync.service';
 
   controllers: [ProductsController],
 
-  providers: [
-    ProductsService,
-    ProductSyncService,
-  ],
+  providers: [ProductsService, ProductSyncService],
 
-  exports: [
-    ProductsService, ProductSyncService,
-  ],
+  exports: [ProductsService, ProductSyncService],
 })
 export class ProductsModule {}

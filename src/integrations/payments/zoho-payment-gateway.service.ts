@@ -8,12 +8,11 @@ export class ZohoPaymentGatewayService {
   constructor(
     private readonly zohoPaymentsService: ZohoPaymentsService,
     private readonly configService: ConfigService,
-  ) { }
+  ) {}
 
   // 💳 CREATE PAYMENT SESSION
   async createPaymentSession(order: any) {
-    const accessToken =
-      await this.zohoPaymentsService.getValidAccessToken();
+    const accessToken = await this.zohoPaymentsService.getValidAccessToken();
 
     const accountId = this.configService.get<string>(
       'ZOHO_PAYMENTS_ACCOUNT_ID',
@@ -53,8 +52,7 @@ export class ZohoPaymentGatewayService {
 
   // 🔍 GET SESSION
   async getPaymentSession(sessionId: string) {
-    const accessToken =
-      await this.zohoPaymentsService.getValidAccessToken();
+    const accessToken = await this.zohoPaymentsService.getValidAccessToken();
 
     const accountId = this.configService.get<string>(
       'ZOHO_PAYMENTS_ACCOUNT_ID',
@@ -102,8 +100,7 @@ export class ZohoPaymentGatewayService {
 
   // 💸 REFUND
   async refundPayment(paymentId: string, amount: number) {
-    const accessToken =
-      await this.zohoPaymentsService.getValidAccessToken();
+    const accessToken = await this.zohoPaymentsService.getValidAccessToken();
 
     const accountId = this.configService.get<string>(
       'ZOHO_PAYMENTS_ACCOUNT_ID',
@@ -123,10 +120,7 @@ export class ZohoPaymentGatewayService {
       return response.data;
     } catch (error: unknown) {
       const err = error as AxiosError;
-      console.error(
-        'Zoho Refund Error:',
-        err.response?.data || err.message,
-      );
+      console.error('Zoho Refund Error:', err.response?.data || err.message);
       throw error;
     }
   }

@@ -22,13 +22,8 @@ import { ProductsModule } from '../../modules/products/products.module';
 
   controllers: [ZohoImageSyncController],
 
-  providers: [
-    ZohoImageSyncService,
-    S3UploadService,
-  ],
+  providers: [ZohoImageSyncService, S3UploadService],
 
-  exports: [
-    ZohoImageSyncService,
-  ],
+  exports: [ZohoImageSyncService],
 })
 export class ZohoImageSyncModule {}

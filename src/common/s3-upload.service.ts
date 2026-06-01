@@ -39,7 +39,9 @@ export class S3UploadService {
       region: this.region,
       credentials: {
         accessKeyId: this.configService.getOrThrow<string>('AWS_ACCESS_KEY_ID'),
-        secretAccessKey: this.configService.getOrThrow<string>('AWS_SECRET_ACCESS_KEY'),
+        secretAccessKey: this.configService.getOrThrow<string>(
+          'AWS_SECRET_ACCESS_KEY',
+        ),
       },
     });
   }
@@ -84,7 +86,11 @@ export class S3UploadService {
     const s3Url = `https://${this.bucket}.s3.${this.region}.amazonaws.com/${s3Key}`;
 
     // ── Skip if unchanged ────────────────────────────────────────
-    if (existingHash && existingHash === imageHash && (await this.fileExists(s3Key))) {
+    if (
+      existingHash &&
+      existingHash === imageHash &&
+      (await this.fileExists(s3Key))
+    ) {
       this.logger.log(`⏭️  Image unchanged — skipping upload for ${itemId}`);
       return { s3Url, s3Key, imageHash, skipped: true };
     }
@@ -126,7 +132,9 @@ export class S3UploadService {
 
   private async fileExists(key: string): Promise<boolean> {
     try {
-      await this.s3.send(new HeadObjectCommand({ Bucket: this.bucket, Key: key }));
+      await this.s3.send(
+        new HeadObjectCommand({ Bucket: this.bucket, Key: key }),
+      );
       return true;
     } catch {
       return false;

@@ -1,3 +1,4 @@
+import './instrumentation';
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { ValidationPipe } from '@nestjs/common';
@@ -28,7 +29,7 @@ async function bootstrap() {
     credentials: true,
   });
 
-    const config = new DocumentBuilder()
+  const config = new DocumentBuilder()
     .setTitle('My API')
     .setDescription('Interactive API documentation')
     .setVersion('1.0')
@@ -38,7 +39,6 @@ async function bootstrap() {
   const document = SwaggerModule.createDocument(app, config);
 
   SwaggerModule.setup('api-docs', app, document);
-
 
   // 🔥 CRITICAL: RAW BODY for Zoho webhook ONLY
   app.use('/payments/webhook', bodyParser.raw({ type: '*/*' }));

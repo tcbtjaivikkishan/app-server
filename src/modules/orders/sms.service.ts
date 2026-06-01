@@ -10,7 +10,9 @@ export class SmsService {
     amount: number,
     orderId: string,
   ): Promise<void> {
-    this.logger.log(`✅ SMS service started for order ${orderId} to mobile ${mobile}`);
+    this.logger.log(
+      `✅ SMS service started for order ${orderId} to mobile ${mobile}`,
+    );
     try {
       const res = await axios.post(
         'https://control.msg91.com/api/v5/oneapi/api/flow/order-sms/run',

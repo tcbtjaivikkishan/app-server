@@ -56,7 +56,7 @@ export class AuthService {
     private zohoService: ZohoAuthService,
     private redis: RedisService,
     private cartService: CartService,
-  ) { }
+  ) {}
 
   // ADD THIS HELPER INSIDE CLASS
   private getRedis() {

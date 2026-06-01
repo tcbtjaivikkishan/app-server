@@ -1,9 +1,4 @@
-import {
-  Injectable,
-  HttpException,
-  HttpStatus,
-  Logger,
-} from '@nestjs/common';
+import { Injectable, HttpException, HttpStatus, Logger } from '@nestjs/common';
 import axios, { AxiosError, AxiosInstance } from 'axios';
 import { ConfigService } from '@nestjs/config';
 
@@ -51,7 +46,9 @@ export class ShippingService {
         {
           headers: {
             'public-key': this.configService.get<string>('SHIPMOZO_PUBLIC_KEY'),
-            'private-key': this.configService.get<string>('SHIPMOZO_PRIVATE_KEY'),
+            'private-key': this.configService.get<string>(
+              'SHIPMOZO_PRIVATE_KEY',
+            ),
             'Content-Type': 'application/json',
           },
         },
@@ -66,7 +63,6 @@ export class ShippingService {
         );
       }
 
-
       const delhiveryOption = rates.find((r: any) =>
         r.name?.toLowerCase().includes('delhivery'),
       );
@@ -76,12 +72,10 @@ export class ShippingService {
       if (delhiveryOption) {
         selected = delhiveryOption;
       } else {
-
         selected = rates.reduce((min: any, curr: any) =>
           curr.total_charges < min.total_charges ? curr : min,
         );
       }
-
 
       return {
         success: true,

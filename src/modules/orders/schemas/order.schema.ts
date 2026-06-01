@@ -36,7 +36,14 @@ export class Order {
 
   // 📦 ORDER STATUS
   @Prop({
-    enum: ['created', 'confirmed', 'processing', 'shipped', 'delivered', 'cancelled'],
+    enum: [
+      'created',
+      'confirmed',
+      'processing',
+      'shipped',
+      'delivered',
+      'cancelled',
+    ],
     default: 'created',
   })
   orderStatus!: string;

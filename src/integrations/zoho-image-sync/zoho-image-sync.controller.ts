@@ -13,9 +13,7 @@ import { ProductSyncService } from '../../modules/products/product-sync.service'
 
 @Controller('zoho')
 export class ZohoImageSyncController {
-  private readonly logger = new Logger(
-    ZohoImageSyncController.name,
-  );
+  private readonly logger = new Logger(ZohoImageSyncController.name);
 
   private processingItems = new Set<string>();
 
@@ -28,15 +26,10 @@ export class ZohoImageSyncController {
   // Validate webhook token
   // ─────────────────────────────────────────
   private validateToken(token: string): boolean {
-    const expected =
-      this.configService.get<string>(
-        'ZOHO_WEBHOOK_SECRET',
-      );
+    const expected = this.configService.get<string>('ZOHO_WEBHOOK_SECRET');
 
     if (expected && token !== expected) {
-      this.logger.warn(
-        '⛔ Invalid webhook token',
-      );
+      this.logger.warn('⛔ Invalid webhook token');
       return false;
     }
 
@@ -48,16 +41,9 @@ export class ZohoImageSyncController {
   // ─────────────────────────────────────────
   private extractItemId(body: any): string | null {
     try {
-      const payload = body?.JSONString
-        ? JSON.parse(body.JSONString)
-        : body;
+      const payload = body?.JSONString ? JSON.parse(body.JSONString) : body;
 
-      return (
-        payload?.item_id ||
-        payload?.itemId ||
-        payload?.id ||
-        null
-      );
+      return payload?.item_id || payload?.itemId || payload?.id || null;
     } catch {
       return null;
     }
@@ -66,13 +52,9 @@ export class ZohoImageSyncController {
   // ─────────────────────────────────────────
   // Duplicate processing guard
   // ─────────────────────────────────────────
-  private isAlreadyProcessing(
-    itemId: string,
-  ): boolean {
+  private isAlreadyProcessing(itemId: string): boolean {
     if (this.processingItems.has(itemId)) {
-      this.logger.warn(
-        `⚠️ Already processing ${itemId}`,
-      );
+      this.logger.warn(`⚠️ Already processing ${itemId}`);
 
       return true;
     }
@@ -90,11 +72,7 @@ export class ZohoImageSyncController {
     @Headers('x-zoho-webhook-token')
     token: string,
   ) {
-    return this.processWebhook(
-      body,
-      token,
-      'created',
-    );
+    return this.processWebhook(body, token, 'created');
   }
 
   // ─────────────────────────────────────────
@@ -107,11 +85,7 @@ export class ZohoImageSyncController {
     @Headers('x-zoho-webhook-token')
     token: string,
   ) {
-    return this.processWebhook(
-      body,
-      token,
-      'updated',
-    );
+    return this.processWebhook(body, token, 'updated');
   }
 
   // ─────────────────────────────────────────
@@ -124,11 +98,7 @@ export class ZohoImageSyncController {
     @Headers('x-zoho-webhook-token')
     token: string,
   ) {
-    return this.processWebhook(
-      body,
-      token,
-      'deleted',
-    );
+    return this.processWebhook(body, token, 'deleted');
   }
 
   // ─────────────────────────────────────────
@@ -141,21 +111,13 @@ export class ZohoImageSyncController {
     @Headers('x-zoho-webhook-token')
     token: string,
   ) {
-    return this.processWebhook(
-      body,
-      token,
-      'fallback',
-    );
+    return this.processWebhook(body, token, 'fallback');
   }
 
   // ─────────────────────────────────────────
   // MAIN PROCESSOR
   // ─────────────────────────────────────────
-  private async processWebhook(
-    body: any,
-    token: string,
-    event: string,
-  ) {
+  private async processWebhook(body: any, token: string, event: string) {
     if (!this.validateToken(token)) {
       return {
         status: 'rejected',
@@ -164,9 +126,7 @@ export class ZohoImageSyncController {
 
     const itemId = this.extractItemId(body);
 
-    this.logger.log(
-      `📩 [${event.toUpperCase()}] item_id: ${itemId}`,
-    );
+    this.logger.log(`📩 [${event.toUpperCase()}] item_id: ${itemId}`);
 
     if (!itemId) {
       return {
@@ -186,13 +146,9 @@ export class ZohoImageSyncController {
 
     try {
       if (event === 'deleted') {
-        await this.productSyncService.deleteByZohoItemId(
-          String(itemId),
-        );
+        await this.productSyncService.deleteByZohoItemId(String(itemId));
       } else {
-        await this.productSyncService.syncSingleItem(
-          String(itemId),
-        );
+        await this.productSyncService.syncSingleItem(String(itemId));
       }
 
       return {
@@ -201,9 +157,7 @@ export class ZohoImageSyncController {
         itemId,
       };
     } catch (err: any) {
-      this.logger.error(
-        `❌ Webhook processing failed: ${err.message}`,
-      );
+      this.logger.error(`❌ Webhook processing failed: ${err.message}`);
 
       return {
         status: 'failed',

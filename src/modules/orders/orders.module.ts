@@ -26,9 +26,9 @@ import { CouponModule } from '../coupon/coupon.module';
     PaymentsModule,
     CartModule,
     ShippingModule,
-    CouponModule
+    CouponModule,
   ],
   controllers: [OrdersController, PaymentsController],
   providers: [OrdersService, SmsService],
 })
-export class OrdersModule { }
+export class OrdersModule {}

@@ -1,4 +1,10 @@
-import { Controller, Post, Body, UsePipes, ValidationPipe } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Body,
+  UsePipes,
+  ValidationPipe,
+} from '@nestjs/common';
 import { ShippingService } from './shipping.service';
 import { CalculateRateDto } from './dto/calculate-rate.dto';
 

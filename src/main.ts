@@ -11,8 +11,28 @@ async function bootstrap() {
     bodyParser: false, // ✅ Disable default parser (IMPORTANT)
   });
 
-  // 🔐 Security
-  app.use(helmet());
+  // 🌍 CORS — must be registered BEFORE helmet
+  app.enableCors({
+    origin: [
+      'https://tcbtjaivikkisan.com',
+      'https://www.tcbtjaivikkisan.com',
+      'https://admin.tcbtjaivikkisan.com',
+      'https://api.tcbtjaivikkisan.com',
+      'http://localhost:3000',
+      'http://localhost:3001',
+    ],
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+  });
+
+  // 🔐 Security — crossOriginResourcePolicy set to 'cross-origin' so
+  //   browser can fetch resources (images, fonts) across origins
+  app.use(
+    helmet({
+      crossOriginResourcePolicy: { policy: 'cross-origin' },
+    }),
+  );
 
   // ✅ Validation
   app.useGlobalPipes(
@@ -22,17 +42,6 @@ async function bootstrap() {
       transform: true,
     }),
   );
-
-  // // 🌍 CORS — restricted to known origins only
-  // app.enableCors({
-  //   origin: [
-  //     'https://tcbtjaivikkisan.com',
-  //     'https://www.tcbtjaivikkisan.com',
-  //     'https://admin.tcbtjaivikkisan.com',
-  //     'https://api.tcbtjaivikkisan.com',
-  //   ],
-  //   credentials: true,
-  // });
 
   // 📄 Swagger — only available in non-production
   if (process.env.NODE_ENV !== 'production') {

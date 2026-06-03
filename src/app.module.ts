@@ -23,10 +23,12 @@ import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
-    ThrottlerModule.forRoot([{
-      ttl: 60000,   // 60 seconds window
-      limit: 100,   // max 100 requests per window per IP
-    }]),
+    ThrottlerModule.forRoot([
+      {
+        ttl: 60, // 60 seconds window
+        limit: 100, // max 100 requests per window per IP
+      },
+    ]),
     MongooseModule.forRootAsync({
       inject: [ConfigService],
       useFactory: (configService: ConfigService) => ({

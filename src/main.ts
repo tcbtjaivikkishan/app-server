@@ -34,7 +34,7 @@ async function bootstrap() {
   //   credentials: true,
   // });
 
-  // 📄 Swagger — only available in development
+  // 📄 Swagger — only available in non-production
   if (process.env.NODE_ENV !== 'production') {
     const config = new DocumentBuilder()
       .setTitle('TCBT API')
@@ -53,7 +53,8 @@ async function bootstrap() {
   // ✅ Normal JSON parser for all other routes
   app.use(bodyParser.json());
 
-  await app.listen(3000);
+  const port = Number(process.env.PORT) || 3000;
+  await app.listen(port);
 }
 
 bootstrap();
